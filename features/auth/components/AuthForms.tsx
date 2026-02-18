@@ -14,15 +14,51 @@ export const LoginForm: React.FC = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || '/admin';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     
-    // 1. Check for Demo Credentials FIRST (Bypass Supabase API)
-    if (email.trim() === 'admin@toursphere.com' && password === 'password123') {
+    // 1. Only use Demo Bypass if Supabase is NOT configured
+    if (!isConfigured) {
+      if (email.trim() === 'admin@toursphere.com' && password === 'password123') {
+        setTimeout(() => {
+          setAuth(
+            { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+            { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+          );
+          navigate('/admin');
+          setLoading(false);
+        }, 600);
+        return;
+      }
+      
+      setError('Invalid demo credentials. Use admin@toursphere.com / password123');
+      setLoading(false);
+      return;
+    }
+    
+    // 2. Production Login (Must use real Supabase Auth)
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      
+      // The session change will be picked up by AuthProvider, but we navigate now
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoAdmin = () => {
+    if (!isConfigured) {
+      setEmail('admin@toursphere.com');
+      setPassword('password123');
+      setLoading(true);
       setTimeout(() => {
         setAuth(
           { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
@@ -30,52 +66,12 @@ export const LoginForm: React.FC = () => {
         );
         navigate('/admin');
         setLoading(false);
-      }, 600);
-      return;
+      }, 400);
+    } else {
+      // In production, just fill the fields to help the user
+      setEmail('admin@toursphere.com');
+      setPassword('password123');
     }
-
-    if (email.trim() === 'customer@example.com' && password === 'password123') {
-      setTimeout(() => {
-        setAuth(
-          { id: 'demo-user', email: 'customer@example.com' } as any,
-          { id: 'demo-user', full_name: 'John Traveler', role: 'customer' }
-        );
-        navigate('/dashboard');
-        setLoading(false);
-      }, 600);
-      return;
-    }
-    
-    // 2. Fallback to Supabase only if configured and not using demo credentials
-    if (!isConfigured) {
-      setError('Invalid demo credentials. Use admin@toursphere.com / password123');
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      navigate(from, { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during login');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoAdmin = () => {
-    setEmail('admin@toursphere.com');
-    setPassword('password123');
-    setLoading(true);
-    setTimeout(() => {
-      setAuth(
-        { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
-        { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
-      );
-      navigate('/admin');
-      setLoading(false);
-    }, 400);
   };
 
   return (
@@ -126,25 +122,25 @@ export const LoginForm: React.FC = () => {
         </button>
       </form>
 
-      {!isConfigured && (
-        <div className="mt-8 space-y-4 pt-8 border-t border-slate-100">
-          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
-            <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
-            <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
-              <p className="mb-1 underline">Demo Credentials:</p>
-              <p>Email: admin@toursphere.com</p>
-              <p>Pass: password123</p>
-            </div>
+      <div className="mt-8 space-y-4 pt-8 border-t border-slate-100">
+        <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
+          <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
+          <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
+            <p className="mb-1 underline">{isConfigured ? 'Production Mode:' : 'Demo Mode:'}</p>
+            <p>Use your real Supabase credentials.</p>
+            {!isConfigured && <p>Pass: password123</p>}
           </div>
+        </div>
+        {!isConfigured && (
           <button 
             onClick={handleDemoAdmin}
             className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
           >
             <ShieldCheck className="w-4 h-4" />
-            Sign in as Admin (Demo)
+            Quick Sign-In (Demo)
           </button>
-        </div>
-      )}
+        )}
+      </div>
       
       <p className="mt-8 text-center text-xs text-slate-400 font-bold">
         Don't have an account? <Link to="/register" className="text-emerald-600 hover:text-emerald-700 transition-colors">Join the club</Link>
@@ -174,13 +170,15 @@ export const RegisterForm: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { full_name: fullName } }
       });
-      if (error) throw error;
-      navigate('/dashboard');
+      if (signUpError) throw signUpError;
+      
+      alert("Registration successful! Please check your email for a confirmation link (if enabled) or log in.");
+      navigate('/login');
     } catch (err: any) {
       setError(err.message);
     } finally {

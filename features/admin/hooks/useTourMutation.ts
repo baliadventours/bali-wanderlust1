@@ -12,6 +12,12 @@ export function useTourMutation() {
         return { id: data.id || 'mock-id' };
       }
 
+      // Check Session Integrity
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Authentication Required: Your session has expired. Please log in again to perform this action.");
+      }
+
       const isNew = !data.id || data.id === 'create';
       const tourPayload = { 
         title: data.title, 
@@ -29,11 +35,17 @@ export function useTourMutation() {
 
       if (isNew) {
         const { data: newTour, error } = await supabase.from('tours').insert(tourPayload).select('id').single();
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase Insert Error:", error);
+          throw error;
+        }
         tourId = newTour.id;
       } else {
         const { error } = await supabase.from('tours').update(tourPayload).eq('id', tourId);
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase Update Error:", error);
+          throw error;
+        }
       }
 
       // Sync Related Child Tables
@@ -47,14 +59,14 @@ export function useTourMutation() {
       };
 
       await Promise.all([
-        syncTable('tour_itineraries', data.itineraries, i => ({ title: i.title, description: i.description, day_number: i.day_number, time_label: i.time_label, image_url: i.image_url })),
-        syncTable('tour_gallery', data.gallery, g => ({ image_url: g.image_url })),
-        syncTable('tour_highlights', data.highlights, h => ({ content: h.content })),
-        syncTable('tour_faq', data.faqs, f => ({ question: f.question, answer: f.answer })),
-        syncTable('tour_inclusions', data.inclusions, i => ({ content: i.content, type: i.type })),
-        syncTable('tour_reviews', data.reviews, r => ({ reviewer_name: r.reviewer_name, rating: Number(r.rating), comment: r.comment })),
-        syncTable('tour_fact_values', data.facts, f => ({ fact_id: f.fact_id, value: f.value })),
-        syncTable('tour_pricing_packages', data.pricing_packages, p => ({ 
+        syncTable('tour_itineraries', data.itineraries || [], i => ({ title: i.title, description: i.description, day_number: i.day_number, time_label: i.time_label, image_url: i.image_url })),
+        syncTable('tour_gallery', data.gallery || [], g => ({ image_url: g.image_url })),
+        syncTable('tour_highlights', data.highlights || [], h => ({ content: h.content })),
+        syncTable('tour_faq', data.faqs || [], f => ({ question: f.question, answer: f.answer })),
+        syncTable('tour_inclusions', data.inclusions || [], i => ({ content: i.content, type: i.type })),
+        syncTable('tour_reviews', data.reviews || [], r => ({ reviewer_name: r.reviewer_name, rating: Number(r.rating), comment: r.comment })),
+        syncTable('tour_fact_values', data.facts || [], f => ({ fact_id: f.fact_id, value: f.value })),
+        syncTable('tour_pricing_packages', data.pricing_packages || [], p => ({ 
           package_name: p.package_name, 
           description: p.description,
           price_tiers: p.price_tiers || [],
