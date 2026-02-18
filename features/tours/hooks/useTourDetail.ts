@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
 import { Tour } from '../types';
@@ -70,7 +69,8 @@ export function useTourDetail(slug: string) {
           tour_type_id: 'type-1',
           avg_rating: 4.8,
           review_count: 109,
-          destination: { name: { en: 'Ubud, Bali' } },
+          // Fix: Added missing id and slug to satisfy Destination type
+          destination: { id: 'ubud-bali', slug: 'ubud-bali', name: { en: 'Ubud, Bali' } },
           highlights: [
             'Have a safe time rafting with the help of a trained guide.',
             'Take advantage of the free lunch spread.',
