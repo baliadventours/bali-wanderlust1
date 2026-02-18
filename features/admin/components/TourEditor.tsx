@@ -5,7 +5,7 @@ import {
   Save, X, Plus, Trash2, Image as ImageIcon, 
   MapPin, Tag, Info, List, DollarSign, Calendar, HelpCircle, Star, 
   ShieldCheck, Loader2, Upload, MessageSquare, ListTodo, Link as LinkIcon,
-  CheckCircle2
+  CheckCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -42,7 +42,7 @@ export const TourEditor: React.FC = () => {
           cats: [{ id: 'cat-cul', name: 'Cultural' }, { id: 'cat-adv', name: 'Adventure' }],
           dests: [{ id: 'bali', name: 'Bali' }, { id: 'iceland', name: 'Iceland' }],
           facts: [{ id: 'f-dur', name: 'Duration', icon: 'clock' }, { id: 'f-dif', name: 'Difficulty', icon: 'zap' }],
-          tours: [{ id: 'b1', title: 'Mount Batur Trek' }, { id: 'b2', title: 'Ayung River Rafting' }]
+          tours: [{ id: 'b1', title: { en: 'Mount Batur Trek' } }, { id: 'b2', title: { en: 'Ayung River Rafting' } }]
         });
         return;
       }
@@ -79,8 +79,10 @@ export const TourEditor: React.FC = () => {
     if (tour) {
       methods.reset({
         ...tour,
-        title: typeof tour.title === 'string' ? { en: tour.title } : tour.title,
-        description: typeof tour.description === 'string' ? { en: tour.description } : tour.description,
+        title: typeof tour.title === 'string' ? { en: tour.title } : tour.title || { en: '' },
+        description: typeof tour.description === 'string' ? { en: tour.description } : tour.description || { en: '' },
+        important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : tour.important_info || { en: '' },
+        booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : tour.booking_policy || { en: '' },
       });
     }
   }, [tour, methods]);
@@ -101,7 +103,7 @@ export const TourEditor: React.FC = () => {
     try {
       const url = await uploadToImgBB(file);
       callback(url);
-    } catch (err) { alert("Upload failed. Ensure VITE_IMGBB_API_KEY is in your environment."); } finally { setIsUploading(false); }
+    } catch (err) { alert("Upload failed. Ensure VITE_IMGBB_API_KEY is configured."); } finally { setIsUploading(false); }
   };
 
   const onSubmit = async (data: any) => {
@@ -140,7 +142,7 @@ export const TourEditor: React.FC = () => {
 
           <div className="p-10">
             {activeTab === 'basic' && (
-              <div className="space-y-8">
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Public Title (EN)</label>
@@ -160,7 +162,7 @@ export const TourEditor: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Destination</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Destination Hub</label>
                     <select {...methods.register('destination_id')} className="w-full p-4 bg-slate-50 border rounded-xl outline-none">
                       <option value="">Select...</option>
                       {meta.dests.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -175,48 +177,48 @@ export const TourEditor: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="pt-6 border-t">
-                  <h3 className="text-xs font-bold text-slate-900 mb-4 uppercase tracking-widest">Quick Facts</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="pt-6 border-t border-slate-100">
+                  <h3 className="text-xs font-bold text-slate-900 mb-4 uppercase tracking-widest flex items-center gap-2"><ListTodo className="w-4 h-4" /> Quick Facts</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {facts.map((field, index) => (
-                      <div key={field.id} className="flex gap-2 items-center">
-                        <select {...methods.register(`facts.${index}.fact_id`)} className="p-3 bg-slate-50 border rounded-xl flex-grow text-xs outline-none">
-                          <option value="">Select Fact Type...</option>
+                      <div key={field.id} className="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <select {...methods.register(`facts.${index}.fact_id`)} className="p-2 bg-white border rounded-lg flex-grow text-xs outline-none">
+                          <option value="">Attribute...</option>
                           {meta.facts.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                         </select>
-                        <input {...methods.register(`facts.${index}.value`)} className="p-3 bg-slate-50 border rounded-xl w-32 text-xs outline-none" placeholder="e.g. 4 Hours" />
+                        <input {...methods.register(`facts.${index}.value`)} className="p-2 bg-white border rounded-lg w-32 text-xs outline-none" placeholder="e.g. 4 Hours" />
                         <button type="button" onClick={() => removeFact(index)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => appendFact({ fact_id: '', value: '' })} className="flex items-center gap-2 text-emerald-600 text-xs font-bold hover:bg-emerald-50 p-2 rounded-lg transition-all w-fit"><Plus className="w-4 h-4" /> Add Fact</button>
+                    <button type="button" onClick={() => appendFact({ fact_id: '', value: '' })} className="flex items-center gap-2 text-emerald-600 text-xs font-bold hover:bg-emerald-50 p-3 rounded-xl transition-all w-fit border border-dashed border-emerald-200"><Plus className="w-4 h-4" /> Add Metric</button>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'content' && (
-              <div className="space-y-8">
+              <div className="space-y-8 animate-in fade-in">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Primary Description (EN)</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Primary Narrative (EN)</label>
                   <textarea {...methods.register('description.en')} rows={6} className="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="Narrate the adventure..." />
                 </div>
-                <div className="pt-6 border-t">
+                <div className="pt-6 border-t border-slate-100">
                   <h3 className="text-xs font-bold text-slate-900 mb-4 uppercase tracking-widest">Expedition Highlights</h3>
                   <div className="space-y-3">
                     {highlights.map((field, index) => (
-                      <div key={field.id} className="flex gap-2">
-                        <input {...methods.register(`highlights.${index}.content`)} className="flex-grow p-4 bg-slate-50 border rounded-xl outline-none" placeholder="e.g. Visit 3 secret waterfalls" />
+                      <div key={field.id} className="flex gap-2 group">
+                        <input {...methods.register(`highlights.${index}.content`)} className="flex-grow p-4 bg-slate-50 border rounded-xl outline-none group-hover:border-emerald-200 transition-colors" placeholder="e.g. Visit 3 secret waterfalls" />
                         <button type="button" onClick={() => removeHighlight(index)} className="text-rose-500 p-2"><Trash2 className="w-5 h-5" /></button>
                       </div>
                     ))}
                   </div>
                   <button type="button" onClick={() => appendHighlight({ content: '' })} className="mt-4 flex items-center gap-2 text-emerald-600 font-bold text-xs"><Plus className="w-4 h-4" /> Add Highlight</button>
                 </div>
-                <div className="pt-6 border-t">
+                <div className="pt-6 border-t border-slate-100">
                    <h3 className="text-xs font-bold text-slate-900 mb-4 uppercase tracking-widest">Related Adventures</h3>
-                   <div className="grid grid-cols-2 gap-4">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                      {meta.tours.filter(t => t.id !== id).map(t => (
-                       <label key={t.id} className="flex items-center gap-3 p-4 bg-slate-50 border rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                       <label key={t.id} className="flex items-center gap-3 p-4 bg-slate-50 border rounded-xl cursor-pointer hover:bg-slate-100 transition-colors border-slate-200">
                          <input type="checkbox" {...methods.register('related_tour_ids')} value={t.id} className="w-4 h-4 rounded text-emerald-600" />
                          <span className="text-xs font-bold text-slate-700">{t.title?.en || t.title}</span>
                        </label>
@@ -227,19 +229,19 @@ export const TourEditor: React.FC = () => {
             )}
 
             {activeTab === 'itinerary' && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in fade-in">
                 {itineraries.map((field, index) => (
-                  <div key={field.id} className="p-8 bg-slate-50 border rounded-xl relative group">
+                  <div key={field.id} className="p-8 bg-slate-50 border rounded-xl relative group border-slate-200">
                     <button type="button" onClick={() => removeItinerary(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
                     <div className="grid grid-cols-12 gap-8">
                       <div className="col-span-12 md:col-span-3 space-y-4">
-                        <label className="block aspect-video bg-white border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer overflow-hidden relative">
+                        <label className="block aspect-video bg-white border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group-hover:border-emerald-300 transition-colors">
                            <input type="file" className="hidden" onChange={(e) => handleImageUpload(e, (url) => methods.setValue(`itineraries.${index}.image_url`, url))} />
                            {methods.watch(`itineraries.${index}.image_url`) ? (
                              <img src={methods.watch(`itineraries.${index}.image_url`)} className="w-full h-full object-cover" alt="Itinerary Frame" />
                            ) : (
                              <div className="text-center p-4">
-                               <Upload className="w-6 h-6 mx-auto text-slate-300 mb-2" />
+                               <ImageIcon className="w-6 h-6 mx-auto text-slate-300 mb-2" />
                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Add Frame</span>
                              </div>
                            )}
@@ -247,24 +249,24 @@ export const TourEditor: React.FC = () => {
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                            <input {...methods.register(`itineraries.${index}.day_number`)} type="number" placeholder="Day" className="p-3 bg-white border rounded-lg text-xs font-bold text-center outline-none" />
-                           <input {...methods.register(`itineraries.${index}.time_label`)} placeholder="Time (opt)" className="p-3 bg-white border rounded-lg text-xs font-bold text-center outline-none" />
+                           <input {...methods.register(`itineraries.${index}.time_label`)} placeholder="Time" className="p-3 bg-white border rounded-lg text-xs font-bold text-center outline-none" />
                         </div>
                       </div>
                       <div className="col-span-12 md:col-span-9 space-y-4">
-                        <input {...methods.register(`itineraries.${index}.title.en`)} placeholder="Segment Heading" className="w-full p-4 bg-white border rounded-xl font-bold outline-none" />
-                        <textarea {...methods.register(`itineraries.${index}.description.en`)} rows={4} placeholder="Narrative for this segment..." className="w-full p-4 bg-white border rounded-xl text-sm outline-none" />
+                        <input {...methods.register(`itineraries.${index}.title.en`)} placeholder="Segment Heading" className="w-full p-4 bg-white border rounded-xl font-bold outline-none border-slate-200" />
+                        <textarea {...methods.register(`itineraries.${index}.description.en`)} rows={4} placeholder="Narrative for this segment..." className="w-full p-4 bg-white border rounded-xl text-sm outline-none border-slate-200" />
                       </div>
                     </div>
                   </div>
                 ))}
-                <button type="button" onClick={() => appendItinerary({ title: { en: '' }, description: { en: '' }, day_number: itineraries.length + 1 })} className="w-full py-6 border-2 border-dashed rounded-xl text-slate-400 font-bold hover:bg-emerald-50 hover:text-emerald-600 transition-all flex items-center justify-center gap-2 border-slate-200">
-                  <Plus className="w-5 h-5" /> Expand Itinerary
+                <button type="button" onClick={() => appendItinerary({ title: { en: '' }, description: { en: '' }, day_number: itineraries.length + 1 })} className="w-full py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:bg-emerald-50 hover:text-emerald-600 transition-all flex items-center justify-center gap-2">
+                  <Plus className="w-5 h-5" /> Expand Trip Timeline
                 </button>
               </div>
             )}
 
             {activeTab === 'pricing' && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in fade-in">
                 {pricing.map((field, index) => (
                   <div key={field.id} className="p-8 bg-slate-50 border rounded-xl border-emerald-100 relative">
                     <div className="flex justify-between items-center mb-6">
@@ -273,36 +275,36 @@ export const TourEditor: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="md:col-span-2 space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Package Name</label>
-                        <input {...methods.register(`pricing_packages.${index}.package_name`)} className="w-full p-3 bg-white border rounded-xl font-bold outline-none" placeholder="e.g. Standard Entry" />
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Tier Label</label>
+                        <input {...methods.register(`pricing_packages.${index}.package_name`)} className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" placeholder="e.g. Standard Entry" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Base Price (USD)</label>
-                        <input {...methods.register(`pricing_packages.${index}.base_price`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none" />
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Base Rate (USD)</label>
+                        <input {...methods.register(`pricing_packages.${index}.base_price`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                          <div className="space-y-2">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Min Guests</label>
-                           <input {...methods.register(`pricing_packages.${index}.min_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none" />
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Min Capacity</label>
+                           <input {...methods.register(`pricing_packages.${index}.min_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
                          </div>
                          <div className="space-y-2">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Max Guests</label>
-                           <input {...methods.register(`pricing_packages.${index}.max_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none" />
+                           <label className="text-[10px] font-bold text-slate-400 uppercase">Max Capacity</label>
+                           <input {...methods.register(`pricing_packages.${index}.max_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
                          </div>
                       </div>
                     </div>
                   </div>
                 ))}
                 <button type="button" onClick={() => appendPricing({ package_name: '', base_price: 0, min_people: 1, max_people: 10 })} className="w-full py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all flex items-center justify-center gap-2">
-                   <Plus className="w-5 h-5" /> Add Pricing Tier
+                   <Plus className="w-5 h-5" /> Register Pricing Tier
                 </button>
               </div>
             )}
 
             {activeTab === 'gallery' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 animate-in fade-in">
                 {gallery.map((field, index) => (
-                  <div key={field.id} className="aspect-square relative rounded-xl overflow-hidden bg-slate-100 border group">
+                  <div key={field.id} className="aspect-square relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group">
                     <img src={methods.watch(`gallery.${index}.image_url`)} className="w-full h-full object-cover" alt="Gallery item" />
                     <button type="button" onClick={() => removeGallery(index)} className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg text-rose-500 opacity-0 group-hover:opacity-100 transition-all shadow-sm"><Trash2 className="w-4 h-4" /></button>
                   </div>
@@ -310,81 +312,81 @@ export const TourEditor: React.FC = () => {
                 <label className="aspect-square border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-all relative">
                   <input type="file" className="hidden" onChange={(e) => handleImageUpload(e, (url) => appendGallery({ image_url: url }))} />
                   {isUploading ? <Loader2 className="animate-spin text-emerald-600" /> : <Upload className="text-slate-300 w-8 h-8" />}
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Add To Vault</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Store Frame</span>
                 </label>
               </div>
             )}
 
             {activeTab === 'inclusions' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-in fade-in">
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Included</h3>
+                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Coverage</h3>
                   {inclusions.map((field, index) => methods.watch(`inclusions.${index}.type`) === 'include' ? (
-                    <div key={field.id} className="flex gap-2 animate-in fade-in">
-                       <input {...methods.register(`inclusions.${index}.content`)} className="flex-grow p-3 bg-slate-50 border rounded-xl text-sm outline-none" />
+                    <div key={field.id} className="flex gap-2">
+                       <input {...methods.register(`inclusions.${index}.content`)} className="flex-grow p-3 bg-slate-50 border rounded-xl text-sm outline-none border-slate-200" placeholder="e.g. Bottled Water" />
                        <button type="button" onClick={() => removeInclusion(index)} className="text-rose-500 p-2"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ) : null)}
-                  <button type="button" onClick={() => appendInclusion({ content: '', type: 'include' })} className="text-xs font-bold text-emerald-600 hover:underline">+ Add Inclusion</button>
+                  <button type="button" onClick={() => appendInclusion({ content: '', type: 'include' })} className="text-xs font-bold text-emerald-600 hover:underline">+ Item Included</button>
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-rose-600 uppercase tracking-widest flex items-center gap-2"><X className="w-4 h-4" /> Excluded</h3>
+                  <h3 className="text-xs font-bold text-rose-600 uppercase tracking-widest flex items-center gap-2"><X className="w-4 h-4" /> Exclusions</h3>
                   {inclusions.map((field, index) => methods.watch(`inclusions.${index}.type`) === 'exclude' ? (
-                    <div key={field.id} className="flex gap-2 animate-in fade-in">
-                       <input {...methods.register(`inclusions.${index}.content`)} className="flex-grow p-3 bg-slate-50 border rounded-xl text-sm outline-none" />
+                    <div key={field.id} className="flex gap-2">
+                       <input {...methods.register(`inclusions.${index}.content`)} className="flex-grow p-3 bg-slate-50 border rounded-xl text-sm outline-none border-slate-200" placeholder="e.g. Tips & Gratuities" />
                        <button type="button" onClick={() => removeInclusion(index)} className="text-rose-500 p-2"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ) : null)}
-                  <button type="button" onClick={() => appendInclusion({ content: '', type: 'exclude' })} className="text-xs font-bold text-rose-600 hover:underline">+ Add Exclusion</button>
+                  <button type="button" onClick={() => appendInclusion({ content: '', type: 'exclude' })} className="text-xs font-bold text-rose-600 hover:underline">+ Item Excluded</button>
                 </div>
               </div>
             )}
 
             {activeTab === 'policy' && (
-              <div className="space-y-8">
+              <div className="space-y-8 animate-in fade-in">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Participant Requirements (EN)</label>
-                    <textarea {...methods.register('important_info.en')} rows={6} className="w-full p-4 bg-slate-50 border rounded-xl text-sm outline-none" placeholder="e.g. Bring extra clothes, sunscreen, water..." />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Crucial Information (EN)</label>
+                    <textarea {...methods.register('important_info.en')} rows={6} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none" placeholder="e.g. Bring extra clothes, sunscreen, water..." />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Booking & Refund Policy (EN)</label>
-                    <textarea {...methods.register('booking_policy.en')} rows={6} className="w-full p-4 bg-slate-50 border rounded-xl text-sm outline-none" placeholder="e.g. Free cancellation 24h before..." />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Booking Protocol (EN)</label>
+                    <textarea {...methods.register('booking_policy.en')} rows={6} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none" placeholder="e.g. Free cancellation 24h before..." />
                  </div>
-                 <div className="pt-6 border-t">
+                 <div className="pt-6 border-t border-slate-100">
                     <h3 className="text-xs font-bold text-slate-900 mb-6 uppercase tracking-widest">Frequently Asked Questions</h3>
                     {faqs.map((field, index) => (
                       <div key={field.id} className="p-6 bg-slate-50 border rounded-xl mb-4 relative border-slate-200">
                         <button type="button" onClick={() => removeFaq(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                         <div className="space-y-4">
-                           <input {...methods.register(`faqs.${index}.question`)} className="w-full p-3 bg-white border rounded-lg font-bold text-sm outline-none" placeholder="Question" />
-                           <textarea {...methods.register(`faqs.${index}.answer`)} rows={3} className="w-full p-3 bg-white border rounded-lg text-sm outline-none" placeholder="Detailed answer..." />
+                           <input {...methods.register(`faqs.${index}.question`)} className="w-full p-3 bg-white border border-slate-200 rounded-lg font-bold text-sm outline-none" placeholder="Question" />
+                           <textarea {...methods.register(`faqs.${index}.answer`)} rows={3} className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm outline-none" placeholder="Detailed answer..." />
                         </div>
                       </div>
                     ))}
-                    <button type="button" onClick={() => appendFaq({ question: '', answer: '' })} className="flex items-center gap-2 text-indigo-600 font-bold text-xs"><Plus className="w-4 h-4" /> Add FAQ</button>
+                    <button type="button" onClick={() => appendFaq({ question: '', answer: '' })} className="flex items-center gap-2 text-indigo-600 font-bold text-xs"><Plus className="w-4 h-4" /> Add FAQ Entry</button>
                  </div>
               </div>
             )}
 
             {activeTab === 'feedback' && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in fade-in">
                 <div className="bg-emerald-50 p-8 rounded-xl border border-emerald-100 text-center mb-8">
-                   <h3 className="font-bold text-emerald-900 mb-2">Internal Verification</h3>
-                   <p className="text-emerald-700 text-xs mb-6">Seeds manual reviews or imports historical testimonials.</p>
-                   <button type="button" onClick={() => appendReview({ reviewer_name: '', rating: 5, comment: '' })} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold text-xs shadow-lg hover:bg-emerald-700 transition-all">Add Testimonial</button>
+                   <h3 className="font-bold text-emerald-900 mb-2">Social Proof Management</h3>
+                   <p className="text-emerald-700 text-xs mb-6">Manually seed verified reviews or testimonials.</p>
+                   <button type="button" onClick={() => appendReview({ reviewer_name: '', rating: 5, comment: '' })} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold text-xs shadow-lg hover:bg-emerald-700 transition-all">Add Review Record</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {reviews.map((field, index) => (
-                    <div key={field.id} className="p-6 bg-white border rounded-xl shadow-sm relative border-slate-200">
+                    <div key={field.id} className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm relative">
                        <button type="button" onClick={() => removeReview(index)} className="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                        <div className="space-y-4">
                           <div className="flex gap-4">
-                             <input {...methods.register(`reviews.${index}.reviewer_name`)} className="flex-grow p-3 bg-slate-50 border rounded-lg font-bold text-xs outline-none" placeholder="Full Name" />
-                             <select {...methods.register(`reviews.${index}.rating`)} className="p-3 bg-slate-50 border rounded-lg text-xs font-black text-amber-500 outline-none">
+                             <input {...methods.register(`reviews.${index}.reviewer_name`)} className="flex-grow p-3 bg-slate-50 border border-slate-100 rounded-lg font-bold text-xs outline-none" placeholder="Full Name" />
+                             <select {...methods.register(`reviews.${index}.rating`)} className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black text-amber-500 outline-none">
                                {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} Stars</option>)}
                              </select>
                           </div>
-                          <textarea {...methods.register(`reviews.${index}.comment`)} rows={3} className="w-full p-3 bg-slate-50 border rounded-lg text-xs outline-none" placeholder="Detailed feedback..." />
+                          <textarea {...methods.register(`reviews.${index}.comment`)} rows={3} className="w-full p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none" placeholder="Testimonial text..." />
                        </div>
                     </div>
                   ))}

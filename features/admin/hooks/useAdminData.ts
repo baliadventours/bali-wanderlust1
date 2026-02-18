@@ -22,14 +22,11 @@ export function useAdminStats() {
           ]
         };
       }
-      
       const [bookings, tours] = await Promise.all([
         supabase.from('bookings').select('id, total_amount_usd'),
         supabase.from('tours').select('id', { count: 'exact' }).eq('is_published', true)
       ]);
-
       const totalRevenue = bookings.data?.reduce((sum, b) => sum + Number(b.total_amount_usd), 0) || 0;
-
       return {
         bookingsCount: bookings.data?.length || 0,
         totalRevenue,
@@ -94,12 +91,7 @@ export function useUpdateBookingStatus() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       if (!isConfigured) return { id, status };
-      const { data, error } = await supabase
-        .from('bookings')
-        .update({ status })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('bookings').update({ status }).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
@@ -116,7 +108,6 @@ export function useAdminTour(id?: string) {
       if (!id || id === 'create') return null;
       
       if (!isConfigured) {
-        // Return rich mock data so the editor fields populate in preview mode
         return {
           id,
           title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
@@ -125,6 +116,8 @@ export function useAdminTour(id?: string) {
           description: { en: 'Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace.' },
           category_id: 'cat-cul',
           destination_id: 'bali',
+          important_info: { en: 'Wear comfortable shoes.' },
+          booking_policy: { en: 'Cancel 24h before for full refund.' },
           itineraries: [
             { day_number: 1, title: { en: 'Forest Arrival' }, description: { en: 'Meet the monkeys.' }, image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }
           ],
@@ -136,6 +129,9 @@ export function useAdminTour(id?: string) {
           faqs: [{ question: 'Is it safe?', answer: 'Yes, very.' }],
           reviews: [{ reviewer_name: 'John Doe', rating: 5, comment: 'Amazing!' }],
           facts: [{ fact_id: 'f-dur', value: '4 Hours' }],
+          pricing_packages: [
+            { package_name: 'Standard', base_price: 45, min_people: 1, max_people: 10 }
+          ],
           related_tour_ids: []
         };
       }
@@ -157,8 +153,6 @@ export function useAdminTour(id?: string) {
         .single();
 
       if (error) throw error;
-      
-      // Normalize related tours into simple ID array for the form
       return {
         ...data,
         related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
@@ -173,12 +167,7 @@ export function useUpdateUserRole() {
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
       if (!isConfigured) return { id, role };
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('profiles').update({ role }).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
