@@ -136,7 +136,7 @@ export function useAdminTour(id?: string) {
           .maybeSingle();
 
         if (error) {
-          // If the join fails, try a simpler select to at least get core data
+          console.error("Supabase query error, attempting simple fetch:", error);
           const { data: simpleData, error: simpleError } = await supabase
             .from('tours')
             .select(`*`)
@@ -163,7 +163,7 @@ export function useAdminTour(id?: string) {
           facts: data.facts || [],
           pricing_packages: data.pricing_packages?.map((p: any) => ({
             ...p,
-            price_tiers: p.price_tiers || []
+            price_tiers: Array.isArray(p.price_tiers) ? p.price_tiers : []
           })) || [],
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };

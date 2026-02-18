@@ -494,3 +494,5 @@ export const TourEditor: React.FC = () => {
         </div>
       </form>
     </FormProvider>
+  );
+};
