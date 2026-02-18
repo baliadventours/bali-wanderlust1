@@ -43,9 +43,12 @@ export const TourManagement: React.FC = () => {
               
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <div className="flex gap-2">
-                  <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                  <Link 
+                    to={`/admin/tours/${tour.id}`}
+                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                  >
                     <Edit3 className="w-4 h-4" />
-                  </button>
+                  </Link>
                   <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                     <Trash2 className="w-4 h-4" />
                   </button>
