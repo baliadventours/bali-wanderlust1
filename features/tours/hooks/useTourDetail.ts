@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
 import { Tour } from '../types';
@@ -114,14 +115,21 @@ export function useTourDetail(slug: string) {
           tour_type:tour_types(name),
           itineraries:tour_itineraries(*),
           availability:tour_availability(*),
-          seasonal_rules:seasonal_pricing_rules(*),
+          pricing_packages:tour_pricing_packages(*),
           addons:tour_addons(*),
-          reviews:reviews(*, profiles(full_name, avatar_url))
+          highlights:tour_highlights(*),
+          inclusions:tour_inclusions(*),
+          faqs:tour_faq(*),
+          reviews:tour_reviews(*),
+          facts:tour_fact_values(value, fact:tour_facts(*))
         `)
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
 
-      if (error) return null;
+      if (error) {
+        console.error("Error fetching tour detail:", error);
+        return null;
+      }
       return data as Tour;
     },
     enabled: !!slug,
