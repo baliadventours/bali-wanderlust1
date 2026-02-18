@@ -1,0 +1,68 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase, isConfigured } from '../../../lib/supabase';
+
+export function useAdminStats() {
+  return useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      if (!isConfigured) {
+        return {
+          revenue: [
+            { name: 'Jan', value: 4000 }, { name: 'Feb', value: 3000 },
+            { name: 'Mar', value: 5000 }, { name: 'Apr', value: 8000 },
+            { name: 'May', value: 7500 }, { name: 'Jun', value: 12000 }
+          ],
+          bookingsCount: 142,
+          totalRevenue: 45200,
+          pendingInquiries: 8,
+          activeTours: 24
+        };
+      }
+      // Real implementation would use RPC or multiple queries
+      return { revenue: [], bookingsCount: 0, totalRevenue: 0, pendingInquiries: 0, activeTours: 0 };
+    }
+  });
+}
+
+export function useAdminBookings() {
+  return useQuery({
+    queryKey: ['admin-bookings'],
+    queryFn: async () => {
+      if (!isConfigured) {
+        return Array(8).fill(null).map((_, i) => ({
+          id: `b-${i}`,
+          created_at: new Date().toISOString(),
+          status: i % 3 === 0 ? 'confirmed' : 'pending',
+          total_amount_usd: 250 + (i * 100),
+          customer: { full_name: 'John Doe', email: 'john@example.com' },
+          tour: { title: { en: 'Grand Canyon Adventure' } }
+        }));
+      }
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          customer:profiles(full_name, email),
+          availability:tour_availability(tour:tours(title))
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useUpdateBookingStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (!isConfigured) return;
+      const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+    }
+  });
+}

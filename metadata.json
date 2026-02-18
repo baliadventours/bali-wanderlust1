@@ -1,0 +1,5 @@
+{
+  "name": "TourSphere SaaS Architecture",
+  "description": "Comprehensive architectural blueprint for a production-ready, scalable Tour Booking Platform using React, Supabase, and Stripe.",
+  "requestFramePermissions": []
+}
