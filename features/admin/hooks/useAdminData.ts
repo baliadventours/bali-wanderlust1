@@ -7,18 +7,55 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
+      const defaultStats = { 
+        bookingsCount: 0, 
+        totalRevenue: 0, 
+        activeTours: 0,
+        revenue: [
+          { name: 'Jan', value: 0 },
+          { name: 'Feb', value: 0 },
+          { name: 'Mar', value: 0 },
+          { name: 'Apr', value: 0 },
+          { name: 'May', value: 0 },
+          { name: 'Jun', value: 0 },
+        ]
+      };
+
       if (!isConfigured) {
         return { 
-          bookingsCount: 42, totalRevenue: 12500, activeTours: 12,
-          revenue: [{ name: 'Jan', value: 2400 }, { name: 'Feb', value: 1398 }, { name: 'Mar', value: 9800 }, { name: 'Apr', value: 3908 }, { name: 'May', value: 4800 }, { name: 'Jun', value: 3800 }]
+          ...defaultStats,
+          bookingsCount: 42, 
+          totalRevenue: 12500, 
+          activeTours: 12,
+          revenue: [
+            { name: 'Jan', value: 2400 },
+            { name: 'Feb', value: 1398 },
+            { name: 'Mar', value: 9800 },
+            { name: 'Apr', value: 3908 },
+            { name: 'May', value: 4800 },
+            { name: 'Jun', value: 3800 },
+          ]
         };
       }
-      const [bookings, tours] = await Promise.all([
-        supabase.from('bookings').select('id, total_amount_usd'),
-        supabase.from('tours').select('id', { count: 'exact' }).eq('is_published', true)
-      ]);
-      const totalRevenue = bookings.data?.reduce((sum, b) => sum + Number(b.total_amount_usd), 0) || 0;
-      return { bookingsCount: bookings.data?.length || 0, totalRevenue, activeTours: tours.count || 0, revenue: [] };
+
+      try {
+        const [bookings, tours] = await Promise.all([
+          supabase.from('bookings').select('id, total_amount_usd'),
+          supabase.from('tours').select('id', { count: 'exact' }).eq('status', 'published')
+        ]);
+        
+        const totalRevenue = bookings.data?.reduce((sum, b) => sum + Number(b.total_amount_usd), 0) || 0;
+        
+        return {
+          bookingsCount: bookings.data?.length || 0,
+          totalRevenue,
+          activeTours: tours.count || 0,
+          revenue: defaultStats.revenue // In prod, compute this from bookings
+        };
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+        return defaultStats;
+      }
     }
   });
 }
@@ -31,8 +68,8 @@ export function useAdminBookings() {
         return [{ id: 'b-demo-1', created_at: new Date().toISOString(), status: 'confirmed', total_amount_usd: 450, customer: { full_name: 'Alice Wonder', email: 'alice@example.com' }, tour: { title: { en: 'Ubud Jungle Adventure' } } }];
       }
       const { data, error } = await supabase.from('bookings').select(`*, customer:profiles(full_name, email), availability:tour_availability(tour:tours(title))`).order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      if (error) return [];
+      return data || [];
     }
   });
 }
@@ -44,9 +81,13 @@ export function useAdminUsers() {
       if (!isConfigured) {
         return [{ id: 'u1', full_name: 'Admin User', email: 'admin@toursphere.com', role: 'admin', created_at: new Date().toISOString() }];
       }
-      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        return [];
+      }
     }
   });
 }
@@ -71,7 +112,6 @@ export function useAdminTour(id?: string) {
       if (!id || id === 'create') return null;
       
       if (!isConfigured) {
-        // Return structured mock data for 'b1' or other IDs
         return {
           id,
           title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
@@ -115,7 +155,6 @@ export function useAdminTour(id?: string) {
 
         if (error || !data) return null;
         
-        // Clean up title/description if they came back as strings (for legacy support)
         const tour = {
           ...data,
           title: typeof data.title === 'string' ? { en: data.title } : data.title || { en: '' },

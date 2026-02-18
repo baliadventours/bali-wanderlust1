@@ -1,62 +1,67 @@
 
--- CLEAN SLATE: DROPPING EVERYTHING TO FIX SCHEMA MISMATCH
-DROP TABLE IF EXISTS public.related_tours CASCADE;
-DROP TABLE IF EXISTS public.tour_reviews CASCADE;
-DROP TABLE IF EXISTS public.tour_faq CASCADE;
-DROP TABLE IF EXISTS public.tour_inclusions CASCADE;
-DROP TABLE IF EXISTS public.tour_itineraries CASCADE;
-DROP TABLE IF EXISTS public.tour_pricing_packages CASCADE;
-DROP TABLE IF EXISTS public.tour_highlights CASCADE;
-DROP TABLE IF EXISTS public.tour_gallery CASCADE;
-DROP TABLE IF EXISTS public.tour_fact_values CASCADE;
-DROP TABLE IF EXISTS public.tours CASCADE;
-DROP TABLE IF EXISTS public.tour_facts CASCADE;
-DROP TABLE IF EXISTS public.destinations CASCADE;
-DROP TABLE IF EXISTS public.tour_categories CASCADE;
-DROP TABLE IF EXISTS public.profiles CASCADE;
-DROP TYPE IF EXISTS tour_status CASCADE;
-DROP TYPE IF EXISTS inclusion_type CASCADE;
+-- 1. CLEAN SLATE (OPTIONAL: UNCOMMENT IF YOU WANT TO FULLY RESET)
+-- DROP TABLE IF EXISTS public.related_tours CASCADE;
+-- DROP TABLE IF EXISTS public.tour_reviews CASCADE;
+-- DROP TABLE IF EXISTS public.tour_faq CASCADE;
+-- DROP TABLE IF EXISTS public.tour_inclusions CASCADE;
+-- DROP TABLE IF EXISTS public.tour_itineraries CASCADE;
+-- DROP TABLE IF EXISTS public.tour_pricing_packages CASCADE;
+-- DROP TABLE IF EXISTS public.tour_highlights CASCADE;
+-- DROP TABLE IF EXISTS public.tour_gallery CASCADE;
+-- DROP TABLE IF EXISTS public.tour_fact_values CASCADE;
+-- DROP TABLE IF EXISTS public.tours CASCADE;
+-- DROP TABLE IF EXISTS public.tour_facts CASCADE;
+-- DROP TABLE IF EXISTS public.destinations CASCADE;
+-- DROP TABLE IF EXISTS public.tour_categories CASCADE;
+-- DROP TABLE IF EXISTS public.profiles CASCADE;
+-- DROP TYPE IF EXISTS tour_status CASCADE;
+-- DROP TYPE IF EXISTS inclusion_type CASCADE;
 
--- 1. EXTENSIONS & ENUMS
+-- 2. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE tour_status AS ENUM ('draft', 'published');
-CREATE TYPE inclusion_type AS ENUM ('include', 'exclude');
+-- 3. ENUMS (Handled safely)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tour_status') THEN
+        CREATE TYPE tour_status AS ENUM ('draft', 'published');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'inclusion_type') THEN
+        CREATE TYPE inclusion_type AS ENUM ('include', 'exclude');
+    END IF;
+END $$;
 
--- 2. USER PROFILES (Essential for Auth & RLS)
-CREATE TABLE public.profiles (
+-- 4. TABLES
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
     email TEXT,
     avatar_url TEXT,
-    role TEXT DEFAULT 'customer', -- 'admin', 'editor', 'customer'
+    role TEXT DEFAULT 'customer',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. REFERENCE TABLES
-CREATE TABLE public.tour_categories (
+CREATE TABLE IF NOT EXISTS public.tour_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.destinations (
+CREATE TABLE IF NOT EXISTS public.destinations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.tour_facts (
+CREATE TABLE IF NOT EXISTS public.tour_facts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     icon TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. CORE TOUR TABLE
-CREATE TABLE public.tours (
+CREATE TABLE IF NOT EXISTS public.tours (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title JSONB NOT NULL DEFAULT '{"en": ""}',
     slug TEXT UNIQUE NOT NULL,
@@ -76,29 +81,28 @@ CREATE TABLE public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. CHILD TABLES
-CREATE TABLE public.tour_fact_values (
+CREATE TABLE IF NOT EXISTS public.tour_fact_values (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     fact_id UUID REFERENCES public.tour_facts(id) ON DELETE CASCADE,
     value TEXT NOT NULL
 );
 
-CREATE TABLE public.tour_gallery (
+CREATE TABLE IF NOT EXISTS public.tour_gallery (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
     sort_order INT DEFAULT 0
 );
 
-CREATE TABLE public.tour_highlights (
+CREATE TABLE IF NOT EXISTS public.tour_highlights (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     sort_order INT DEFAULT 0
 );
 
-CREATE TABLE public.tour_pricing_packages (
+CREATE TABLE IF NOT EXISTS public.tour_pricing_packages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     package_name TEXT NOT NULL,
@@ -107,7 +111,7 @@ CREATE TABLE public.tour_pricing_packages (
     max_people INT NOT NULL
 );
 
-CREATE TABLE public.tour_itineraries (
+CREATE TABLE IF NOT EXISTS public.tour_itineraries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     day_number INT,
@@ -118,21 +122,21 @@ CREATE TABLE public.tour_itineraries (
     sort_order INT DEFAULT 0
 );
 
-CREATE TABLE public.tour_inclusions (
+CREATE TABLE IF NOT EXISTS public.tour_inclusions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     type inclusion_type DEFAULT 'include'
 );
 
-CREATE TABLE public.tour_faq (
+CREATE TABLE IF NOT EXISTS public.tour_faq (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     question TEXT NOT NULL,
     answer TEXT NOT NULL
 );
 
-CREATE TABLE public.tour_reviews (
+CREATE TABLE IF NOT EXISTS public.tour_reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     reviewer_name TEXT NOT NULL,
@@ -141,34 +145,38 @@ CREATE TABLE public.tour_reviews (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.related_tours (
+CREATE TABLE IF NOT EXISTS public.related_tours (
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     related_tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     PRIMARY KEY (tour_id, related_tour_id)
 );
 
--- 6. SECURITY
+-- 5. RLS POLICIES
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (status = 'published');
-CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public Read Tours') THEN
+        CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (status = 'published');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admin Manage Tours') THEN
+        CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
+            EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+        );
+    END IF;
+END $$;
 
--- Note: We enable full access for testing, you can tighten these later.
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public Profiles Read" ON public.profiles FOR SELECT USING (TRUE);
-CREATE POLICY "Users Update Own Profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-
--- TRIGGER TO SYNC AUTH.USERS TO PUBLIC.PROFILES
+-- 6. AUTH TRIGGER (Fixes the "already exists" error)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name, email, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'customer');
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'customer')
+  ON CONFLICT (id) DO NOTHING;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Drop trigger before creating it to ensure idempotency
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

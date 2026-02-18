@@ -8,7 +8,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { setAuth, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // If not configured, we just set loading to false and let the app render
     if (!isConfigured) {
       setLoading(false);
       return;
@@ -21,13 +20,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (sessionError) throw sessionError;
 
         if (session?.user) {
-          const { data: profile } = await supabase
+          // Attempt to fetch profile but handle errors gracefully (e.g., table missing)
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
-          setAuth(session.user, profile || { id: session.user.id, full_name: 'Guest User', role: 'customer' });
+          if (profileError) {
+            console.warn("Profile fetch error - usually means profiles table isn't created yet:", profileError.message);
+          }
+          
+          setAuth(session.user, profile || { id: session.user.id, full_name: 'Auth User', role: 'customer' });
         } else {
           setAuth(null, null);
         }
@@ -43,12 +47,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setAuth(session.user, profile || { id: session.user.id, full_name: 'Guest User', role: 'customer' });
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          setAuth(session.user, profile || { id: session.user.id, full_name: 'Auth User', role: 'customer' });
+        } catch (e) {
+          setAuth(session.user, { id: session.user.id, full_name: 'Auth User', role: 'customer' });
+        }
       } else {
         setAuth(null, null);
       }
