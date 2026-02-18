@@ -1,25 +1,30 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase';
+import { supabase, isConfigured } from '../../../lib/supabase';
 import { Plus, Trash2, Edit2, Loader2, Globe } from 'lucide-react';
+import { getTranslation } from '../../../utils/currency';
+import { useAppStore } from '../../../store/useAppStore';
 
 export const DestinationManagement: React.FC = () => {
   const queryClient = useQueryClient();
+  const { language } = useAppStore();
   const [isAdding, setIsAdding] = useState(false);
-  const [newDest, setNewDest] = useState({ name: '', slug: '' });
+  const [newDest, setNewDest] = useState({ name: { en: '' }, slug: '' });
 
   const { data: destinations, isLoading } = useQuery({
     queryKey: ['admin-destinations'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('destinations').select('*').order('name');
+      if (!isConfigured) return [{ id: '1', name: { en: 'Bali' }, slug: 'bali' }];
+      const { data, error } = await supabase.from('destinations').select('*').order('slug');
       if (error) throw error;
-      return data || [{ id: '1', name: 'Bali', slug: 'bali' }];
+      return data;
     }
   });
 
   const addMutation = useMutation({
     mutationFn: async (dest: any) => {
+      if (!isConfigured) return dest;
       const { data, error } = await supabase.from('destinations').insert(dest).select().single();
       if (error) throw error;
       return data;
@@ -27,7 +32,7 @@ export const DestinationManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-destinations'] });
       setIsAdding(false);
-      setNewDest({ name: '', slug: '' });
+      setNewDest({ name: { en: '' }, slug: '' });
     }
   });
 
@@ -40,14 +45,20 @@ export const DestinationManagement: React.FC = () => {
           <h1 className="text-2xl font-black text-slate-900">Global Destinations</h1>
           <p className="text-slate-500 text-sm">Organize expeditions by geographical hubs.</p>
         </div>
-        <button onClick={() => setIsAdding(true)} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all"><Plus className="w-4 h-4" /> New Hub</button>
+        <button onClick={() => setIsAdding(true)} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
+          <Plus className="w-4 h-4" /> New Hub
+        </button>
       </div>
 
       {isAdding && (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 animate-in slide-in-from-top-2">
           <div className="flex-grow space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hub Name</label>
-            <input className="w-full p-3 bg-slate-50 border rounded-lg outline-none" value={newDest.name} onChange={e => setNewDest({ ...newDest, name: e.target.value, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} />
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hub Name (EN)</label>
+            <input 
+              className="w-full p-3 bg-slate-50 border rounded-lg outline-none" 
+              value={newDest.name.en} 
+              onChange={e => setNewDest({ ...newDest, name: { en: e.target.value }, slug: e.target.value.toLowerCase().replace(/ /g, '-') })} 
+            />
           </div>
           <div className="flex-grow space-y-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Slug</label>
@@ -55,7 +66,7 @@ export const DestinationManagement: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <button onClick={() => setIsAdding(false)} className="p-3 text-slate-400 hover:text-slate-600 font-bold">Cancel</button>
-            <button onClick={() => addMutation.mutate(newDest)} disabled={addMutation.isPending} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50">Save Hub</button>
+            <button onClick={() => addMutation.mutate(newDest)} disabled={addMutation.isPending} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all">Save Hub</button>
           </div>
         </div>
       )}
@@ -72,10 +83,13 @@ export const DestinationManagement: React.FC = () => {
           <tbody className="divide-y divide-slate-50">
             {destinations?.map((d: any) => (
               <tr key={d.id} className="hover:bg-slate-50 transition-colors group">
-                <td className="px-6 py-4 font-bold text-slate-900 flex items-center gap-3"><Globe className="w-4 h-4 text-emerald-500" /> {d.name}</td>
+                <td className="px-6 py-4 font-bold text-slate-900 flex items-center gap-3">
+                  <Globe className="w-4 h-4 text-emerald-500" /> 
+                  {getTranslation(d.name, language)}
+                </td>
                 <td className="px-6 py-4 text-slate-500 font-mono text-xs">{d.slug}</td>
                 <td className="px-6 py-4 text-right space-x-2">
-                  <button className="p-2 text-slate-300 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                  <button className="p-2 text-slate-300 hover:text-rose-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             ))}

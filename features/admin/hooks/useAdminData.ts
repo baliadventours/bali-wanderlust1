@@ -95,7 +95,6 @@ export function useAdminTour(id?: string) {
       if (!id || id === 'create') return null;
       
       if (!isConfigured) {
-        // Preview data matches structure exactly
         return {
           id,
           title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
@@ -136,24 +135,27 @@ export function useAdminTour(id?: string) {
           .eq('id', id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Supabase join query failed, trying simple select:", error);
-          const { data: basicData, error: basicError } = await supabase.from('tours').select('*').eq('id', id).maybeSingle();
-          if (basicError || !basicData) throw error || basicError;
-          return { ...basicData, title: typeof basicData.title === 'string' ? { en: basicData.title } : (basicData.title || { en: '' }) };
-        }
-        
+        if (error) throw error;
         if (!data) return null;
         
-        // Defensive data normalization layer
+        const normalizeTrans = (val: any) => {
+          if (!val) return { en: '' };
+          if (typeof val === 'string') return { en: val };
+          return val;
+        };
+
         return {
           ...data,
-          title: typeof data.title === 'string' ? { en: data.title } : (data.title || { en: '' }),
-          description: typeof data.description === 'string' ? { en: data.description } : (data.description || { en: '' }),
-          important_info: typeof data.important_info === 'string' ? { en: data.important_info } : (data.important_info || { en: '' }),
-          booking_policy: typeof data.booking_policy === 'string' ? { en: data.booking_policy } : (data.booking_policy || { en: '' }),
+          title: normalizeTrans(data.title),
+          description: normalizeTrans(data.description),
+          important_info: normalizeTrans(data.important_info),
+          booking_policy: normalizeTrans(data.booking_policy),
           status: data.status || 'draft',
-          itineraries: data.itineraries || [],
+          itineraries: (data.itineraries || []).map((it: any) => ({
+            ...it,
+            title: normalizeTrans(it.title),
+            description: normalizeTrans(it.description)
+          })),
           gallery: data.gallery || [],
           highlights: data.highlights || [],
           inclusions: data.inclusions || [],
@@ -167,12 +169,12 @@ export function useAdminTour(id?: string) {
           related_tour_ids: (data.related_tours || []).map((rt: any) => rt.related_tour_id)
         };
       } catch (err) {
-        console.error("Admin Tour Detail Hook Crash:", err);
+        console.error("Critical Admin Hook Error:", err);
         throw err;
       }
     },
     enabled: !!id && id !== 'create',
-    retry: 1
+    retry: false
   });
 }
 

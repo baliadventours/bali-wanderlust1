@@ -11,6 +11,8 @@ import { useAdminTour } from '../hooks/useAdminData';
 import { useTourMutation } from '../hooks/useTourMutation';
 import { uploadToImgBB } from '../../../lib/imgbb';
 import { supabase, isConfigured } from '../../../lib/supabase';
+// Added missing import for getTranslation
+import { getTranslation } from '../../../utils/currency';
 
 const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
   <button
@@ -134,14 +136,22 @@ export const TourEditor: React.FC = () => {
     if (tour) {
       methods.reset({
         ...tour,
-        title: typeof tour.title === 'string' ? { en: tour.title } : (tour.title || { en: '' }),
-        description: typeof tour.description === 'string' ? { en: tour.description } : (tour.description || { en: '' }),
-        important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : (tour.important_info || { en: '' }),
-        booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : (tour.booking_policy || { en: '' }),
+        title: tour.title || { en: '' },
+        description: tour.description || { en: '' },
+        important_info: tour.important_info || { en: '' },
+        booking_policy: tour.booking_policy || { en: '' },
+        itineraries: tour.itineraries || [],
+        gallery: tour.gallery || [],
+        highlights: tour.highlights || [],
+        inclusions: tour.inclusions || [],
+        faqs: tour.faqs || [],
+        reviews: tour.reviews || [],
+        facts: tour.facts || [],
         pricing_packages: (tour.pricing_packages || []).map((p: any) => ({
           ...p,
           price_tiers: Array.isArray(p.price_tiers) ? p.price_tiers : []
-        }))
+        })),
+        related_tour_ids: tour.related_tour_ids || []
       });
     }
   }, [tour, methods]);
@@ -172,7 +182,7 @@ export const TourEditor: React.FC = () => {
     } catch (err: any) { alert(err.message); }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><Loader2 className="animate-spin text-emerald-600 w-10 h-10 mx-auto mb-4" /><p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading Expedition Data...</p></div></div>;
+  if (isLoading) return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><Loader2 className="animate-spin text-emerald-600 w-10 h-10 mx-auto mb-4" /><p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Assembling Expedition UI...</p></div></div>;
 
   if (error || (!tour && !isCreatePage)) {
     return (
@@ -244,7 +254,7 @@ export const TourEditor: React.FC = () => {
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Destination Hub</label>
                     <select {...methods.register('destination_id')} className="w-full p-4 bg-slate-50 border rounded-xl outline-none">
                       <option value="">Select...</option>
-                      {meta.dests.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      {meta.dests.map(d => <option key={d.id} value={d.id}>{getTranslation(d.name, 'en')}</option>)}
                     </select>
                   </div>
                   <div className="space-y-2">
