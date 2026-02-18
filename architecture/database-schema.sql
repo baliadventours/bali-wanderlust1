@@ -1,5 +1,5 @@
 
--- 1. EXTENSIONS & ENUMS
+-- 1. EXTENSIONS & ENUMS (Consolidated)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DO $$ BEGIN
@@ -25,33 +25,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.destinations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  slug TEXT UNIQUE NOT NULL,
-  name JSONB NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ
-);
-
-CREATE TABLE IF NOT EXISTS public.tour_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  slug TEXT UNIQUE NOT NULL,
-  name JSONB NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.tour_types (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  slug TEXT UNIQUE NOT NULL,
-  name JSONB NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS public.tours (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   slug TEXT UNIQUE NOT NULL,
-  destination_id UUID REFERENCES destinations(id),
-  category_id UUID REFERENCES tour_categories(id),
-  tour_type_id UUID REFERENCES tour_types(id),
   title JSONB NOT NULL,
   description JSONB NOT NULL,
   base_price_usd DECIMAL(12,2) NOT NULL,
@@ -60,120 +36,80 @@ CREATE TABLE IF NOT EXISTS public.tours (
   difficulty difficulty_level DEFAULT 'beginner',
   images TEXT[] DEFAULT '{}',
   is_published BOOLEAN DEFAULT false,
-  avg_rating DECIMAL(3,2) DEFAULT 5.0,
-  review_count INT DEFAULT 0,
-  highlights TEXT[] DEFAULT '{}',
-  inclusions TEXT[] DEFAULT '{}',
-  exclusions TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
-CREATE TABLE IF NOT EXISTS public.tour_itineraries (
+CREATE TABLE IF NOT EXISTS public.blog_posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tour_id UUID REFERENCES tours(id) ON DELETE CASCADE,
-  day_number INT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
   title JSONB NOT NULL,
-  description JSONB NOT NULL,
-  location_name TEXT,
-  image_url TEXT
-);
-
-CREATE TABLE IF NOT EXISTS public.tour_availability (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tour_id UUID REFERENCES tours(id) ON DELETE CASCADE,
-  start_time TIMESTAMPTZ NOT NULL,
-  end_time TIMESTAMPTZ NOT NULL,
-  available_spots INT NOT NULL,
-  total_spots INT NOT NULL,
-  price_override_usd DECIMAL(12,2),
-  status TEXT DEFAULT 'active'
+  excerpt JSONB NOT NULL,
+  content JSONB NOT NULL,
+  featured_image TEXT,
+  category TEXT DEFAULT 'Uncategorized',
+  is_published BOOLEAN DEFAULT false,
+  reading_time_minutes INT DEFAULT 5,
+  author_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS public.bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID REFERENCES profiles(id),
-  availability_id UUID REFERENCES tour_availability(id),
   status booking_status DEFAULT 'pending',
   total_amount_usd DECIMAL(12,2) NOT NULL,
-  currency_code TEXT DEFAULT 'USD',
-  stripe_payment_intent_id TEXT,
-  participant_count INT DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.inquiries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  customer_id UUID REFERENCES profiles(id),
-  tour_id UUID REFERENCES tours(id),
-  subject TEXT NOT NULL,
-  message TEXT NOT NULL,
-  status TEXT DEFAULT 'open',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- 3. STORAGE SETUP (Manual step: Create bucket 'tour-images' in Supabase UI)
+-- Policies for 'tour-images' bucket
+-- Note: Storage policies are handled in the Supabase Storage UI, but logic is:
+-- ALL access for authenticated users with role 'admin' or 'editor'
 
--- 3. AUTOMATION: AUTH SYNC TRIGGER
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url, role)
-  VALUES (
-    new.id, 
-    new.raw_user_meta_data->>'full_name', 
-    new.raw_user_meta_data->>'avatar_url', 
-    'customer'
-  );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- 4. HELPER FUNCTIONS
-CREATE OR REPLACE FUNCTION promote_to_admin(target_email TEXT)
-RETURNS VOID AS $$
-BEGIN
-  UPDATE public.profiles 
-  SET role = 'admin' 
-  WHERE id IN (
-    SELECT id FROM auth.users WHERE email = target_email
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION decrement_available_spots(row_id UUID, count INT)
-RETURNS VOID AS $$
-BEGIN
-  UPDATE public.tour_availability
-  SET available_spots = available_spots - count
-  WHERE id = row_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 5. ROW LEVEL SECURITY (RLS)
+-- 4. RLS POLICIES (Hardened)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tours ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tour_availability ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Users see themselves, Admins see all
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Admins can view all profiles" ON profiles FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+-- Helper Function: Check if user is Admin
+CREATE OR REPLACE FUNCTION is_admin() RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin');
+$$ LANGUAGE sql SECURITY DEFINER;
 
--- Tours: Everyone sees published, Admins see all
-CREATE POLICY "Anyone can view published tours" ON tours FOR SELECT USING (is_published = true);
-CREATE POLICY "Admins can manage tours" ON tours FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'))
-);
+-- Helper Function: Check if user is Staff (Admin or Editor)
+CREATE OR REPLACE FUNCTION is_staff() RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'editor'));
+$$ LANGUAGE sql SECURITY DEFINER;
 
--- Bookings: Users see own, Admins see all
-CREATE POLICY "Users can view own bookings" ON bookings FOR SELECT USING (customer_id = auth.uid());
-CREATE POLICY "Admins can manage bookings" ON bookings FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+-- Profiles Policies
+CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Admins manage roles" ON profiles FOR ALL USING (is_admin());
+
+-- Tours Policies
+CREATE POLICY "Published tours viewable by all" ON tours FOR SELECT USING (is_published = true AND deleted_at IS NULL);
+CREATE POLICY "Staff manage tours" ON tours FOR ALL USING (is_staff());
+
+-- Blog Policies
+CREATE POLICY "Published blogs viewable by all" ON blog_posts FOR SELECT USING (is_published = true AND deleted_at IS NULL);
+CREATE POLICY "Staff manage blogs" ON blog_posts FOR ALL USING (is_staff());
+
+-- Bookings Policies
+CREATE POLICY "Users view own bookings" ON bookings FOR SELECT USING (customer_id = auth.uid());
+CREATE POLICY "Admins manage all bookings" ON bookings FOR ALL USING (is_admin());
+
+-- 5. TRIGGERS
+CREATE OR REPLACE FUNCTION handle_updated_at() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_tours_updated_at BEFORE UPDATE ON tours FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+CREATE TRIGGER set_blogs_updated_at BEFORE UPDATE ON blog_posts FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
