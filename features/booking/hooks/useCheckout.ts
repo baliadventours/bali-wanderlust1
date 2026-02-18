@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
@@ -15,6 +14,7 @@ export function useCheckout(tourId: string, availabilityId: string) {
   const { data: tour, isLoading: isLoadingTour } = useQuery({
     queryKey: ['tour-checkout', tourId],
     queryFn: async () => {
+      // Corrected: use 'tour_addons' to match schema
       const { data, error } = await supabase
         .from('tours')
         .select('*, availability:tour_availability(*), addons:tour_addons(*)')
