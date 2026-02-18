@@ -20,7 +20,26 @@ export function useAdminStats() {
           activeTours: 24
         };
       }
-      return { revenue: [], bookingsCount: 0, totalRevenue: 0, pendingInquiries: 0, activeTours: 0 };
+      
+      const [bookings, inquiries, tours] = await Promise.all([
+        supabase.from('bookings').select('id, total_amount_usd'),
+        supabase.from('inquiries').select('id', { count: 'exact' }).eq('status', 'open'),
+        supabase.from('tours').select('id', { count: 'exact' }).eq('is_published', true)
+      ]);
+
+      const totalRevenue = bookings.data?.reduce((sum, b) => sum + Number(b.total_amount_usd), 0) || 0;
+
+      return {
+        revenue: [
+          { name: 'Jan', value: 4000 }, { name: 'Feb', value: 3000 },
+          { name: 'Mar', value: 5000 }, { name: 'Apr', value: 8000 },
+          { name: 'May', value: 7500 }, { name: 'Jun', value: totalRevenue }
+        ],
+        bookingsCount: bookings.data?.length || 0,
+        totalRevenue,
+        pendingInquiries: inquiries.count || 0,
+        activeTours: tours.count || 0
+      };
     }
   });
 }
@@ -43,12 +62,41 @@ export function useAdminBookings() {
         .from('bookings')
         .select(`
           *,
-          customer:profiles(full_name, email),
+          customer:profiles(full_name, id),
           availability:tour_availability(tour:tours(title))
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
+    }
+  });
+}
+
+export function useAdminUsers() {
+  return useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      if (!isConfigured) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      if (!isConfigured) return;
+      const { error } = await supabase.from('profiles').update({ role }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     }
   });
 }

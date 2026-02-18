@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, BookOpen } from 'lucide-react';
+import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { LocalePicker } from '../shared/LocalePicker';
@@ -123,7 +123,9 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['customer', 'admin', 'editor'] },
     { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, roles: ['customer'] },
     { label: 'Manage Tours', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
-    { label: 'System Admin', path: '/admin', icon: Settings, roles: ['admin'] },
+    { label: 'Orders', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
+    { label: 'User Management', path: '/admin/users', icon: Users, roles: ['admin'] },
+    { label: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['customer', 'admin', 'editor'] },
   ];
 
   const filteredMenu = menuItems.filter(item => profile && item.roles.includes(profile.role));

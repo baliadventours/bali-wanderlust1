@@ -1,11 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-/**
- * ARCHITECTURAL NOTE:
- * In a Vite environment, variables are prefixed with VITE_.
- * We check both import.meta.env and process.env for maximum compatibility.
- */
 const getEnv = (key: string) => {
   try {
     // @ts-ignore
@@ -15,22 +10,28 @@ const getEnv = (key: string) => {
   }
 };
 
-const supabaseUrl = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL') || 'https://placeholder.supabase.co';
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || 'placeholder-key';
+const supabaseUrl = getEnv('VITE_SUPABASE_URL') || getEnv('SUPABASE_URL') || '';
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('SUPABASE_ANON_KEY') || '';
 
-// Check if we are using actual placeholder strings
+const PLACEHOLDER_URL = 'https://placeholder.supabase.co';
+const PLACEHOLDER_KEY = 'placeholder-key';
+
+// Robust configuration check
 export const isConfigured = 
-  supabaseUrl !== 'https://placeholder.supabase.co' && 
-  supabaseAnonKey !== 'placeholder-key';
+  supabaseUrl !== '' && 
+  supabaseUrl !== PLACEHOLDER_URL && 
+  supabaseAnonKey !== '' && 
+  supabaseAnonKey !== PLACEHOLDER_KEY;
 
 if (!isConfigured) {
   console.warn(
-    "Supabase configuration is missing. " +
-    "The app is running in 'Preview Mode' with dummy data. " +
-    "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to connect to your database."
+    "Supabase configuration is missing or incomplete. " +
+    "The app is running in 'Preview Mode' with demo credentials: admin@toursphere.com / password123"
   );
 }
 
-// We always create the client to avoid "undefined" errors in hooks, 
-// even if it points to a placeholder.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Ensure valid URL for createClient even in preview mode
+const finalUrl = isConfigured ? supabaseUrl : PLACEHOLDER_URL;
+const finalKey = isConfigured ? supabaseAnonKey : PLACEHOLDER_KEY;
+
+export const supabase = createClient(finalUrl, finalKey);

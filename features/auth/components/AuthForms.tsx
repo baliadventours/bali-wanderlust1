@@ -21,36 +21,46 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    // In Preview Mode, we simulate login with specific credentials
-    if (!isConfigured) {
+    // 1. Check for Demo Credentials FIRST (Bypass Supabase API)
+    if (email.trim() === 'admin@toursphere.com' && password === 'password123') {
       setTimeout(() => {
-        if (email === 'admin@toursphere.com' && password === 'password123') {
-          setAuth(
-            { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
-            { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
-          );
-          navigate('/admin');
-        } else if (email === 'customer@example.com' && password === 'password123') {
-          setAuth(
-            { id: 'demo-user', email: 'customer@example.com' } as any,
-            { id: 'demo-user', full_name: 'John Traveler', role: 'customer' }
-          );
-          navigate('/dashboard');
-        } else {
-          setError('Invalid credentials for demo mode. Use admin@toursphere.com / password123');
-        }
+        setAuth(
+          { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+          { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+        );
+        navigate('/admin');
         setLoading(false);
-      }, 800);
+      }, 600);
+      return;
+    }
+
+    if (email.trim() === 'customer@example.com' && password === 'password123') {
+      setTimeout(() => {
+        setAuth(
+          { id: 'demo-user', email: 'customer@example.com' } as any,
+          { id: 'demo-user', full_name: 'John Traveler', role: 'customer' }
+        );
+        navigate('/dashboard');
+        setLoading(false);
+      }, 600);
       return;
     }
     
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-      setError(error.message);
+    // 2. Fallback to Supabase only if configured and not using demo credentials
+    if (!isConfigured) {
+      setError('Invalid demo credentials. Use admin@toursphere.com / password123');
       setLoading(false);
-    } else {
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
       navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,7 +75,7 @@ export const LoginForm: React.FC = () => {
       );
       navigate('/admin');
       setLoading(false);
-    }, 500);
+    }, 400);
   };
 
   return (
@@ -74,7 +84,11 @@ export const LoginForm: React.FC = () => {
       <p className="text-slate-500 mb-10 text-sm font-medium">Log in to manage your expeditions.</p>
       
       <form onSubmit={handleLogin} className="space-y-6">
-        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-[10px] text-xs font-bold border border-rose-100">{error}</div>}
+        {error && (
+          <div className="p-4 bg-rose-50 text-rose-600 rounded-[10px] text-xs font-bold border border-rose-100 animate-in fade-in slide-in-from-top-1">
+            {error}
+          </div>
+        )}
         
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -117,7 +131,7 @@ export const LoginForm: React.FC = () => {
           <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
             <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
             <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
-              <p className="mb-1 underline">Demo Admin Credentials:</p>
+              <p className="mb-1 underline">Demo Credentials:</p>
               <p>Email: admin@toursphere.com</p>
               <p>Pass: password123</p>
             </div>
@@ -153,17 +167,24 @@ export const RegisterForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } }
-    });
-    
-    if (error) {
-      setError(error.message);
+    if (!isConfigured) {
+      setError('Registration is disabled in UI Preview Mode. Please use demo credentials to log in.');
       setLoading(false);
-    } else {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } }
+      });
+      if (error) throw error;
       navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -28,16 +28,18 @@ const BlogListingPage = lazy(() => import('./features/blog/components/BlogListin
 const CheckoutPage = lazy(() => import('./features/booking/components/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const BookingSuccessPage = lazy(() => import('./features/booking/components/BookingSuccessPage').then(m => ({ default: m.BookingSuccessPage })));
 const MyBookings = lazy(() => import('./features/customer/components/MyBookings').then(m => ({ default: m.MyBookings })));
+const SettingsPage = lazy(() => import('./features/customer/components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 // Lazy Loaded Admin
 const AdminOverview = lazy(() => import('./features/admin/components/AdminOverview').then(m => ({ default: m.AdminOverview })));
 const TourManagement = lazy(() => import('./features/admin/components/TourManagement').then(m => ({ default: m.TourManagement })));
 const TourEditor = lazy(() => import('./features/admin/components/TourEditor').then(m => ({ default: m.TourEditor })));
 const BookingManagement = lazy(() => import('./features/admin/components/BookingManagement').then(m => ({ default: m.BookingManagement })));
+const UserManagement = lazy(() => import('./features/admin/components/UserManagement').then(m => ({ default: m.UserManagement })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
-    <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+    <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
   </div>
 );
 
@@ -58,16 +60,16 @@ const Home = () => {
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center text-white">
           <h1 className="text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight drop-shadow-2xl">
-            Adventures <span className="text-indigo-400">Untamed.</span>
+            Adventures <span className="text-emerald-400">Untamed.</span>
           </h1>
           <p className="text-xl md:text-2xl text-slate-100 mb-12 max-w-2xl mx-auto font-medium drop-shadow-lg">
             Curated premium experiences across the world's most breathtaking landscapes. Your journey starts here.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link to="/tours" className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-indigo-700 shadow-2xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
+            <Link to="/tours" className="bg-emerald-600 text-white px-10 py-5 rounded-[10px] font-black text-lg hover:bg-emerald-700 shadow-2xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
               Browse Expeditions <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link to="/blog" className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-2xl font-black text-lg hover:bg-white/20 shadow-sm transition-all">
+            <Link to="/blog" className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-[10px] font-black text-lg hover:bg-white/20 shadow-sm transition-all">
               Travel Stories
             </Link>
           </div>
@@ -81,7 +83,7 @@ const Home = () => {
             <h2 className="text-4xl font-black text-slate-900 mb-2">Popular Expeditions</h2>
             <p className="text-slate-500 font-medium text-lg">Hand-picked adventures by our local experts.</p>
           </div>
-          <Link to="/tours" className="hidden md:flex items-center gap-2 text-indigo-600 font-bold hover:translate-x-2 transition-transform">
+          <Link to="/tours" className="hidden md:flex items-center gap-2 text-emerald-600 font-bold hover:translate-x-2 transition-transform">
             View All <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -118,12 +120,12 @@ const Home = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {posts?.slice(0, 3).map(post => (
             <Link key={post.id} to={`/blog/${post.slug}`} className="group space-y-4">
-              <div className="aspect-[16/10] rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm">
+              <div className="aspect-[16/10] rounded-[10px] overflow-hidden border border-slate-100 shadow-sm">
                 <img src={post.featured_image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={post.slug} />
               </div>
               <div>
-                <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">{post.category}</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">{post.title.en}</h3>
+                <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">{post.category}</span>
+                <h3 className="text-xl font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">{post.title.en}</h3>
               </div>
             </Link>
           ))}
@@ -160,6 +162,7 @@ const App: React.FC = () => {
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<AdminOverview />} />
                   <Route path="/dashboard/bookings" element={<MyBookings />} />
+                  <Route path="/dashboard/settings" element={<SettingsPage />} />
                 </Route>
               </Route>
 
@@ -171,6 +174,7 @@ const App: React.FC = () => {
                   <Route path="/admin/tours/create" element={<TourEditor />} />
                   <Route path="/admin/tours/:id" element={<TourEditor />} />
                   <Route path="/admin/bookings" element={<BookingManagement />} />
+                  <Route path="/admin/users" element={<UserManagement />} />
                   <Route path="/admin/pricing" element={<div className="p-8">Seasonal Pricing Rules Global Management</div>} />
                 </Route>
               </Route>
