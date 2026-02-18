@@ -1,26 +1,8 @@
 
--- 1. CLEAN SLATE (OPTIONAL: UNCOMMENT IF YOU WANT TO FULLY RESET)
--- DROP TABLE IF EXISTS public.related_tours CASCADE;
--- DROP TABLE IF EXISTS public.tour_reviews CASCADE;
--- DROP TABLE IF EXISTS public.tour_faq CASCADE;
--- DROP TABLE IF EXISTS public.tour_inclusions CASCADE;
--- DROP TABLE IF EXISTS public.tour_itineraries CASCADE;
--- DROP TABLE IF EXISTS public.tour_pricing_packages CASCADE;
--- DROP TABLE IF EXISTS public.tour_highlights CASCADE;
--- DROP TABLE IF EXISTS public.tour_gallery CASCADE;
--- DROP TABLE IF EXISTS public.tour_fact_values CASCADE;
--- DROP TABLE IF EXISTS public.tours CASCADE;
--- DROP TABLE IF EXISTS public.tour_facts CASCADE;
--- DROP TABLE IF EXISTS public.destinations CASCADE;
--- DROP TABLE IF EXISTS public.tour_categories CASCADE;
--- DROP TABLE IF EXISTS public.profiles CASCADE;
--- DROP TYPE IF EXISTS tour_status CASCADE;
--- DROP TYPE IF EXISTS inclusion_type CASCADE;
-
--- 2. EXTENSIONS
+-- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 3. ENUMS (Handled safely)
+-- 2. ENUMS (Handled safely)
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tour_status') THEN
         CREATE TYPE tour_status AS ENUM ('draft', 'published');
@@ -30,7 +12,7 @@ DO $$ BEGIN
     END IF;
 END $$;
 
--- 4. TABLES
+-- 3. CORE PROFILES TABLE
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
@@ -40,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 4. REFERENCE TABLES
 CREATE TABLE IF NOT EXISTS public.tour_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -61,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.tour_facts (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. TOURS TABLE (CREATE OR REPAIR)
 CREATE TABLE IF NOT EXISTS public.tours (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title JSONB NOT NULL DEFAULT '{"en": ""}',
@@ -70,7 +54,6 @@ CREATE TABLE IF NOT EXISTS public.tours (
     description JSONB DEFAULT '{"en": ""}',
     important_info JSONB DEFAULT '{"en": ""}',
     booking_policy JSONB DEFAULT '{"en": ""}',
-    status tour_status DEFAULT 'draft',
     base_price_usd DECIMAL(12,2) DEFAULT 0,
     duration_minutes INT DEFAULT 0,
     max_participants INT DEFAULT 1,
@@ -81,6 +64,15 @@ CREATE TABLE IF NOT EXISTS public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- REPAIR BLOCK: This adds the 'status' column if it's missing from an existing table
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tours' AND column_name='status') THEN
+        ALTER TABLE public.tours ADD COLUMN status tour_status DEFAULT 'draft';
+    END IF;
+END $$;
+
+-- 6. RELATIONSHIPS & DYNAMIC CONTENT
 CREATE TABLE IF NOT EXISTS public.tour_fact_values (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
@@ -151,20 +143,18 @@ CREATE TABLE IF NOT EXISTS public.related_tours (
     PRIMARY KEY (tour_id, related_tour_id)
 );
 
--- 5. RLS POLICIES
+-- 7. SECURITY & POLICIES (DROP AND RECREATE TO BE SAFE)
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
-DO $$ BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public Read Tours') THEN
-        CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (status = 'published');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admin Manage Tours') THEN
-        CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
-            EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-        );
-    END IF;
-END $$;
 
--- 6. AUTH TRIGGER (Fixes the "already exists" error)
+DROP POLICY IF EXISTS "Public Read Tours" ON public.tours;
+CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (status = 'published');
+
+DROP POLICY IF EXISTS "Admin Manage Tours" ON public.tours;
+CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- 8. AUTH TRIGGER HANDLER
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -175,7 +165,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop trigger before creating it to ensure idempotency
+-- REPAIR: Specifically drop from auth.users before creating
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

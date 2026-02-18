@@ -50,7 +50,7 @@ export function useAdminStats() {
           bookingsCount: bookings.data?.length || 0,
           totalRevenue,
           activeTours: tours.count || 0,
-          revenue: defaultStats.revenue // In prod, compute this from bookings
+          revenue: defaultStats.revenue 
         };
       } catch (err) {
         console.error("Stats fetch error:", err);
@@ -67,9 +67,13 @@ export function useAdminBookings() {
       if (!isConfigured) {
         return [{ id: 'b-demo-1', created_at: new Date().toISOString(), status: 'confirmed', total_amount_usd: 450, customer: { full_name: 'Alice Wonder', email: 'alice@example.com' }, tour: { title: { en: 'Ubud Jungle Adventure' } } }];
       }
-      const { data, error } = await supabase.from('bookings').select(`*, customer:profiles(full_name, email), availability:tour_availability(tour:tours(title))`).order('created_at', { ascending: false });
-      if (error) return [];
-      return data || [];
+      try {
+        const { data, error } = await supabase.from('bookings').select(`*, customer:profiles(full_name, email), availability:tour_availability(tour:tours(title))`).order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch (e) {
+        return [];
+      }
     }
   });
 }
@@ -157,13 +161,16 @@ export function useAdminTour(id?: string) {
         
         const tour = {
           ...data,
-          title: typeof data.title === 'string' ? { en: data.title } : data.title || { en: '' },
-          description: typeof data.description === 'string' ? { en: data.description } : data.description || { en: '' },
+          // Robust mapping in case some columns are null or strings instead of JSONB
+          title: typeof data.title === 'string' ? { en: data.title } : (data.title || { en: '' }),
+          description: typeof data.description === 'string' ? { en: data.description } : (data.description || { en: '' }),
+          status: data.status || 'draft',
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };
         
         return tour;
       } catch (err) {
+        console.error("Tour detail fetch error:", err);
         return null;
       }
     },
