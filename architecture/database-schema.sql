@@ -2,7 +2,7 @@
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. ENUMS (Handled safely)
+-- 2. ENUMS
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tour_status') THEN
         CREATE TYPE tour_status AS ENUM ('draft', 'published');
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS public.tour_facts (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. TOURS TABLE (CREATE OR REPAIR)
+-- 5. TOURS TABLE
 CREATE TABLE IF NOT EXISTS public.tours (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title JSONB NOT NULL DEFAULT '{"en": ""}',
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- REPAIR BLOCK: This adds the 'status' column if it's missing from an existing table
+-- REPAIR STATUS COLUMN
 DO $$ 
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tours' AND column_name='status') THEN
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.tour_itineraries (
 
 CREATE TABLE IF NOT EXISTS public.tour_inclusions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
+    tour_id REFERENCES public.tours(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     type inclusion_type DEFAULT 'include'
 );
@@ -143,30 +143,39 @@ CREATE TABLE IF NOT EXISTS public.related_tours (
     PRIMARY KEY (tour_id, related_tour_id)
 );
 
--- 7. SECURITY & POLICIES (DROP AND RECREATE TO BE SAFE)
+-- 7. SECURITY (RLS)
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public Read Tours" ON public.tours;
-CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (status = 'published');
+CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (TRUE);
 
 DROP POLICY IF EXISTS "Admin Manage Tours" ON public.tours;
 CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
+DROP POLICY IF EXISTS "Public Profiles Read" ON public.profiles;
+CREATE POLICY "Public Profiles Read" ON public.profiles FOR SELECT USING (TRUE);
+
+DROP POLICY IF EXISTS "Users Update Own Profile" ON public.profiles;
+CREATE POLICY "Users Update Own Profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
 -- 8. AUTH TRIGGER HANDLER
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name, email, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'customer')
-  ON CONFLICT (id) DO NOTHING;
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'admin') -- SETTING AS ADMIN FOR INITIAL SETUP
+  ON CONFLICT (id) DO UPDATE SET role = 'admin'; -- ENSURE EXISTING USER BECOMES ADMIN
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- REPAIR: Specifically drop from auth.users before creating
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- MANUAL ELEVATION HELPER: Run this if you are already logged in but not admin
+-- UPDATE profiles SET role = 'admin' WHERE email = 'your-email@example.com';

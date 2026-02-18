@@ -12,29 +12,16 @@ export function useAdminStats() {
         totalRevenue: 0, 
         activeTours: 0,
         revenue: [
-          { name: 'Jan', value: 0 },
-          { name: 'Feb', value: 0 },
-          { name: 'Mar', value: 0 },
-          { name: 'Apr', value: 0 },
-          { name: 'May', value: 0 },
-          { name: 'Jun', value: 0 },
+          { name: 'Jan', value: 0 }, { name: 'Feb', value: 0 }, { name: 'Mar', value: 0 },
+          { name: 'Apr', value: 0 }, { name: 'May', value: 0 }, { name: 'Jun', value: 0 },
         ]
       };
 
       if (!isConfigured) {
         return { 
           ...defaultStats,
-          bookingsCount: 42, 
-          totalRevenue: 12500, 
-          activeTours: 12,
-          revenue: [
-            { name: 'Jan', value: 2400 },
-            { name: 'Feb', value: 1398 },
-            { name: 'Mar', value: 9800 },
-            { name: 'Apr', value: 3908 },
-            { name: 'May', value: 4800 },
-            { name: 'Jun', value: 3800 },
-          ]
+          bookingsCount: 42, totalRevenue: 12500, activeTours: 12,
+          revenue: [{ name: 'Jan', value: 2400 }, { name: 'Feb', value: 1398 }, { name: 'Mar', value: 9800 }, { name: 'Apr', value: 3908 }, { name: 'May', value: 4800 }, { name: 'Jun', value: 3800 }]
         };
       }
 
@@ -43,17 +30,9 @@ export function useAdminStats() {
           supabase.from('bookings').select('id, total_amount_usd'),
           supabase.from('tours').select('id', { count: 'exact' }).eq('status', 'published')
         ]);
-        
         const totalRevenue = bookings.data?.reduce((sum, b) => sum + Number(b.total_amount_usd), 0) || 0;
-        
-        return {
-          bookingsCount: bookings.data?.length || 0,
-          totalRevenue,
-          activeTours: tours.count || 0,
-          revenue: defaultStats.revenue 
-        };
+        return { bookingsCount: bookings.data?.length || 0, totalRevenue, activeTours: tours.count || 0, revenue: defaultStats.revenue };
       } catch (err) {
-        console.error("Stats fetch error:", err);
         return defaultStats;
       }
     }
@@ -126,9 +105,7 @@ export function useAdminTour(id?: string) {
           destination_id: 'bali',
           important_info: { en: 'Wear hiking boots.' },
           booking_policy: { en: 'Flexible cancellation.' },
-          itineraries: [
-            { day_number: 1, title: { en: 'Arrival' }, description: { en: 'Settle in at the camp.' }, image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }
-          ],
+          itineraries: [{ day_number: 1, title: { en: 'Arrival' }, description: { en: 'Settle in at the camp.' }, image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }],
           gallery: [{ image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }],
           highlights: [{ content: 'Sacred Monkey Forest visit' }],
           inclusions: [{ content: 'Private Guide', type: 'include' }],
@@ -155,26 +132,37 @@ export function useAdminTour(id?: string) {
             related_tours:related_tours(related_tour_id)
           `)
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
-        if (error || !data) return null;
+        if (error) {
+          console.error("Supabase Admin Tour Query Error:", error);
+          throw error;
+        }
         
-        const tour = {
+        if (!data) return null;
+        
+        return {
           ...data,
-          // Robust mapping in case some columns are null or strings instead of JSONB
           title: typeof data.title === 'string' ? { en: data.title } : (data.title || { en: '' }),
           description: typeof data.description === 'string' ? { en: data.description } : (data.description || { en: '' }),
           status: data.status || 'draft',
+          itineraries: data.itineraries || [],
+          gallery: data.gallery || [],
+          highlights: data.highlights || [],
+          inclusions: data.inclusions || [],
+          faqs: data.faqs || [],
+          reviews: data.reviews || [],
+          facts: data.facts || [],
+          pricing_packages: data.pricing_packages || [],
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };
-        
-        return tour;
       } catch (err) {
-        console.error("Tour detail fetch error:", err);
-        return null;
+        console.error("Caught Admin Tour Error:", err);
+        throw err;
       }
     },
     enabled: !!id && id !== 'create',
+    retry: false
   });
 }
 

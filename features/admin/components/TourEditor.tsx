@@ -5,7 +5,7 @@ import {
   Save, X, Plus, Trash2, Image as ImageIcon, 
   MapPin, Tag, Info, List, DollarSign, Calendar, HelpCircle, Star, 
   ShieldCheck, Loader2, Upload, MessageSquare, ListTodo, Link as LinkIcon,
-  CheckCircle, ArrowLeft, AlertCircle
+  CheckCircle, ArrowLeft, AlertCircle, Database
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -29,7 +29,7 @@ const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
 export const TourEditor: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: tour, isLoading, isError } = useAdminTour(id);
+  const { data: tour, isLoading, error } = useAdminTour(id);
   const mutation = useTourMutation();
   const [activeTab, setActiveTab] = useState('basic');
   const [isUploading, setIsUploading] = useState(false);
@@ -53,12 +53,7 @@ export const TourEditor: React.FC = () => {
           supabase.from('tour_facts').select('*'),
           supabase.from('tours').select('id, title')
         ]);
-        setMeta({ 
-          cats: c.data || [], 
-          dests: d.data || [], 
-          facts: f.data || [], 
-          tours: t.data || [] 
-        });
+        setMeta({ cats: c.data || [], dests: d.data || [], facts: f.data || [], tours: t.data || [] });
       } catch (err) {
         console.error("Failed to load metadata", err);
       }
@@ -79,10 +74,10 @@ export const TourEditor: React.FC = () => {
     if (tour) {
       methods.reset({
         ...tour,
-        title: typeof tour.title === 'string' ? { en: tour.title } : tour.title || { en: '' },
-        description: typeof tour.description === 'string' ? { en: tour.description } : tour.description || { en: '' },
-        important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : tour.important_info || { en: '' },
-        booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : tour.booking_policy || { en: '' },
+        title: typeof tour.title === 'string' ? { en: tour.title } : (tour.title || { en: '' }),
+        description: typeof tour.description === 'string' ? { en: tour.description } : (tour.description || { en: '' }),
+        important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : (tour.important_info || { en: '' }),
+        booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : (tour.booking_policy || { en: '' }),
       });
     }
   }, [tour, methods]);
@@ -115,16 +110,40 @@ export const TourEditor: React.FC = () => {
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
 
-  // If tour is not found and we are not in create mode, show 404
-  if (!tour && id !== 'create') {
+  // Handle Error specifically
+  if (error || (!tour && id !== 'create')) {
+    const dbError = (error as any);
     return (
-      <div className="h-screen flex flex-col items-center justify-center text-center p-8">
-        <AlertCircle className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Expedition Not Found</h2>
-        <p className="text-slate-500 mb-8 max-w-sm">We couldn't retrieve the record for ID: {id}. It might have been deleted or the database connection is unstable.</p>
-        <button onClick={() => navigate('/admin/tours')} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Back to Inventory
-        </button>
+      <div className="h-screen flex flex-col items-center justify-center text-center p-8 bg-slate-50">
+        <div className="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 text-rose-500 shadow-sm border border-rose-100">
+           {error ? <Database className="w-10 h-10" /> : <AlertCircle className="w-10 h-10" />}
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">
+          {error ? 'Database Query Failed' : 'Expedition Not Found'}
+        </h2>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-lg mb-8">
+           <p className="text-slate-500 text-sm font-medium leading-relaxed">
+             {error ? (
+               <>
+                 <span className="font-bold text-rose-600 block mb-2 underline">Technical Reason:</span>
+                 <code>{dbError?.message || 'Unknown database exception'}</code>
+                 <span className="block mt-4 text-[10px] uppercase tracking-widest text-slate-400">
+                   {dbError?.hint || 'Check if all sub-tables are created in Supabase SQL editor.'}
+                 </span>
+               </>
+             ) : (
+               `We couldn't retrieve the record for ID: ${id}. Ensure the ID is a valid UUID and your user profile has 'admin' privileges.`
+             )}
+           </p>
+        </div>
+        <div className="flex gap-4">
+          <button onClick={() => navigate('/admin/tours')} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 transition-all">
+            <ArrowLeft className="w-4 h-4" /> Back to Inventory
+          </button>
+          <button onClick={() => window.location.reload()} className="bg-white border border-slate-200 text-slate-700 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all">
+            Retry Connection
+          </button>
+        </div>
       </div>
     );
   }
