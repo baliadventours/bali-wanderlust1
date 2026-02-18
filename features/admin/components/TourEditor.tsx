@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider, useWatch } from 'react-hook-form';
 import { 
   Save, X, Plus, Trash2, Image as ImageIcon, 
   MapPin, Tag, Info, List, DollarSign, Calendar, HelpCircle, Star, 
   ShieldCheck, Loader2, Upload, MessageSquare, ListTodo, Link as LinkIcon,
-  CheckCircle, ArrowLeft, AlertCircle, Database
+  CheckCircle, ArrowLeft, AlertCircle, Database, Users as UsersIcon
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -25,6 +25,66 @@ const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
     {label}
   </button>
 );
+
+// Nested Tiers Field Array for cleaner logic
+const PricingTierEditor = ({ packageIndex, control, register }: any) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `pricing_packages.${packageIndex}.price_tiers`
+  });
+
+  return (
+    <div className="space-y-4 pt-4 border-t border-slate-100">
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <UsersIcon className="w-3 h-3" /> Participant Tiers & Pricing
+        </label>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-3">
+        {fields.map((tier, tierIdx) => (
+          <div key={tier.id} className="flex gap-4 items-center animate-in slide-in-from-left-1">
+            <div className="flex-grow grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input 
+                  type="number" 
+                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.people`)}
+                  placeholder="Count"
+                  className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg font-bold text-xs outline-none"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">QTY</span>
+              </div>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.price`)}
+                  placeholder="Price"
+                  className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg font-bold text-xs outline-none text-emerald-600"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">$</span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => remove(tierIdx)}
+              className="p-2 text-rose-300 hover:text-rose-500 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      
+      <button 
+        type="button" 
+        onClick={() => append({ people: fields.length + 1, price: 0 })}
+        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-2"
+      >
+        <Plus className="w-3 h-3" /> Add Tier
+      </button>
+    </div>
+  );
+};
 
 export const TourEditor: React.FC = () => {
   const { id } = useParams();
@@ -80,6 +140,10 @@ export const TourEditor: React.FC = () => {
         description: typeof tour.description === 'string' ? { en: tour.description } : (tour.description || { en: '' }),
         important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : (tour.important_info || { en: '' }),
         booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : (tour.booking_policy || { en: '' }),
+        pricing_packages: tour.pricing_packages?.map((p: any) => ({
+          ...p,
+          price_tiers: p.price_tiers || []
+        })) || []
       });
     }
   }, [tour, methods]);
@@ -112,7 +176,6 @@ export const TourEditor: React.FC = () => {
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
 
-  // Corrected error check: show error only if query fails OR if we are on a specific ID route and the tour doesn't exist.
   if (error || (!tour && !isCreatePage)) {
     const dbError = (error as any);
     return (
@@ -303,35 +366,55 @@ export const TourEditor: React.FC = () => {
             {activeTab === 'pricing' && (
               <div className="space-y-6 animate-in fade-in">
                 {pricing.map((field, index) => (
-                  <div key={field.id} className="p-8 bg-slate-50 border rounded-xl border-emerald-100 relative">
+                  <div key={field.id} className="p-8 bg-slate-50 border rounded-xl border-emerald-100 relative group">
                     <div className="flex justify-between items-center mb-6">
-                      <h4 className="font-bold text-emerald-900 uppercase tracking-widest text-xs flex items-center gap-2"><Tag className="w-4 h-4" /> Package #{index + 1}</h4>
-                      <button type="button" onClick={() => removePricing(index)} className="text-rose-500 hover:bg-rose-100 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      <h4 className="font-bold text-emerald-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                        <Tag className="w-4 h-4" /> Package #{index + 1}
+                      </h4>
+                      <button type="button" onClick={() => removePricing(index)} className="text-rose-400 hover:text-rose-600 p-2 rounded-lg transition-colors">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="md:col-span-2 space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Tier Label</label>
-                        <input {...methods.register(`pricing_packages.${index}.package_name`)} className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" placeholder="e.g. Standard Entry" />
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Basic Details */}
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Display Name</label>
+                          <input 
+                            {...methods.register(`pricing_packages.${index}.package_name`)} 
+                            className="w-full p-3 bg-white border rounded-xl font-bold text-sm outline-none" 
+                            placeholder="e.g. Standard Entry / Private VIP" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inclusions Summary</label>
+                          <textarea 
+                            {...methods.register(`pricing_packages.${index}.description`)} 
+                            rows={3}
+                            className="w-full p-3 bg-white border rounded-xl text-xs outline-none" 
+                            placeholder="Briefly describe what this specific package offers (e.g. Includes lunch and fast-track entry)" 
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Base Rate (USD)</label>
-                        <input {...methods.register(`pricing_packages.${index}.base_price`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                         <div className="space-y-2">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Min Capacity</label>
-                           <input {...methods.register(`pricing_packages.${index}.min_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
-                         </div>
-                         <div className="space-y-2">
-                           <label className="text-[10px] font-bold text-slate-400 uppercase">Max Capacity</label>
-                           <input {...methods.register(`pricing_packages.${index}.max_people`)} type="number" className="w-full p-3 bg-white border rounded-xl font-bold outline-none border-slate-100" />
-                         </div>
-                      </div>
+
+                      {/* Tiers Editor */}
+                      <PricingTierEditor 
+                        packageIndex={index} 
+                        control={methods.control} 
+                        register={methods.register} 
+                      />
                     </div>
                   </div>
                 ))}
-                <button type="button" onClick={() => appendPricing({ package_name: '', base_price: 0, min_people: 1, max_people: 10 })} className="w-full py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-all flex items-center justify-center gap-2">
-                   <Plus className="w-5 h-5" /> Register Pricing Tier
+                
+                <button 
+                  type="button" 
+                  onClick={() => appendPricing({ package_name: '', description: '', price_tiers: [{ people: 1, price: 0 }] })} 
+                  className="w-full py-8 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:bg-emerald-50 hover:text-emerald-600 transition-all flex flex-col items-center justify-center gap-2"
+                >
+                  <Plus className="w-6 h-6" />
+                  <span>Construct New Pricing Package</span>
                 </button>
               </div>
             )}

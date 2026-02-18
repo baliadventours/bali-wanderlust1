@@ -141,9 +141,11 @@ CREATE TABLE public.tour_pricing_packages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     package_name TEXT NOT NULL,
-    base_price DECIMAL(12,2) NOT NULL,
+    description TEXT,
+    price_tiers JSONB DEFAULT '[]', -- [{people: 1, price: 100}, {people: 2, price: 50}]
+    base_price DECIMAL(12,2) DEFAULT 0,
     min_people INT DEFAULT 1,
-    max_people INT NOT NULL
+    max_people INT DEFAULT 10
 );
 
 CREATE TABLE public.tour_itineraries (

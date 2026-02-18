@@ -54,7 +54,14 @@ export function useTourMutation() {
         syncTable('tour_inclusions', data.inclusions, i => ({ content: i.content, type: i.type })),
         syncTable('tour_reviews', data.reviews, r => ({ reviewer_name: r.reviewer_name, rating: Number(r.rating), comment: r.comment })),
         syncTable('tour_fact_values', data.facts, f => ({ fact_id: f.fact_id, value: f.value })),
-        syncTable('tour_pricing_packages', data.pricing_packages, p => ({ package_name: p.package_name, base_price: Number(p.base_price), min_people: Number(p.min_people), max_people: Number(p.max_people) }))
+        syncTable('tour_pricing_packages', data.pricing_packages, p => ({ 
+          package_name: p.package_name, 
+          description: p.description,
+          price_tiers: p.price_tiers || [],
+          base_price: Number(p.base_price || 0), 
+          min_people: Number(p.min_people || 1), 
+          max_people: Number(p.max_people || 10) 
+        }))
       ]);
 
       // Sync Related Tours Join Table
