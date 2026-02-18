@@ -1,17 +1,19 @@
-
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './providers/AuthProvider';
 import { PublicLayout, DashboardLayout } from './components/layout/Layouts';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight, Star, MapPin, Compass } from 'lucide-react';
+import { useTours } from './features/tours/hooks/useTours';
+import { useBlog } from './features/blog/hooks/useBlog';
+import { TourCard } from './features/tours/components/TourCard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
       retry: 1,
     },
   },
@@ -20,6 +22,7 @@ const queryClient = new QueryClient({
 // Lazy Loaded Features
 const TourListingPage = lazy(() => import('./features/tours/components/TourListingPage').then(m => ({ default: m.TourListingPage })));
 const TourDetailPage = lazy(() => import('./features/tours/components/TourDetailPage').then(m => ({ default: m.TourDetailPage })));
+const BlogListingPage = lazy(() => import('./features/blog/components/BlogListingPage').then(m => ({ default: m.BlogListingPage })));
 const CheckoutPage = lazy(() => import('./features/booking/components/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const BookingSuccessPage = lazy(() => import('./features/booking/components/BookingSuccessPage').then(m => ({ default: m.BookingSuccessPage })));
 
@@ -35,16 +38,97 @@ const LoadingFallback = () => (
   </div>
 );
 
-const Home = () => (
-  <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-    <h1 className="text-6xl font-extrabold text-slate-900 mb-6 leading-tight">Your Next <span className="text-indigo-600 underline decoration-indigo-200">Adventure</span> Starts Here.</h1>
-    <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">Explore premium curated tours and unforgettable experiences tailored to your dreams. Discover the world's best destinations.</p>
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <Link to="/tours" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-xl transition-all transform hover:-translate-y-1">Browse All Tours</Link>
-      <Link to="/register" className="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-50 shadow-sm transition-all">Create Account</Link>
+const Home = () => {
+  const { data: toursData } = useTours({});
+  const { data: posts } = useBlog();
+
+  return (
+    <div className="space-y-24 pb-20">
+      {/* Hero */}
+      <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=2000" 
+            className="w-full h-full object-cover brightness-75 scale-105" 
+            alt="Hero" 
+          />
+        </div>
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center text-white">
+          <h1 className="text-6xl md:text-8xl font-black mb-8 leading-tight tracking-tight drop-shadow-2xl">
+            Adventures <span className="text-indigo-400">Untamed.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-slate-100 mb-12 max-w-2xl mx-auto font-medium drop-shadow-lg">
+            Curated premium experiences across the world's most breathtaking landscapes. Your journey starts here.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <Link to="/tours" className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-indigo-700 shadow-2xl transition-all transform hover:-translate-y-1 flex items-center gap-2">
+              Browse Expeditions <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link to="/blog" className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-2xl font-black text-lg hover:bg-white/20 shadow-sm transition-all">
+              Travel Stories
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Tours */}
+      <section className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h2 className="text-4xl font-black text-slate-900 mb-2">Popular Expeditions</h2>
+            <p className="text-slate-500 font-medium text-lg">Hand-picked adventures by our local experts.</p>
+          </div>
+          <Link to="/tours" className="hidden md:flex items-center gap-2 text-indigo-600 font-bold hover:translate-x-2 transition-transform">
+            View All <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {toursData?.data.slice(0, 3).map(tour => (
+            <TourCard key={tour.id} tour={tour} />
+          ))}
+        </div>
+      </section>
+
+      {/* Stats/Proof */}
+      <section className="bg-slate-900 py-24">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+          {[
+            { label: 'Destinations', val: '24+' },
+            { label: 'Curated Tours', val: '150+' },
+            { label: 'Happy Travelers', val: '12k+' },
+            { label: 'Avg Rating', val: '4.9/5' }
+          ].map(s => (
+            <div key={s.label}>
+              <div className="text-4xl md:text-5xl font-black text-white mb-2">{s.val}</div>
+              <div className="text-slate-400 font-bold uppercase tracking-widest text-xs">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Blog Teaser */}
+      <section className="max-w-7xl mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-black text-slate-900 mb-4">Wanderlust Journal</h2>
+          <p className="text-slate-500 max-w-xl mx-auto font-medium">Get the latest travel tips, gear reviews, and stories from the field.</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {posts?.slice(0, 3).map(post => (
+            <Link key={post.id} to={`/blog/${post.slug}`} className="group space-y-4">
+              <div className="aspect-[16/10] rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm">
+                <img src={post.featured_image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={post.slug} />
+              </div>
+              <div>
+                <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">{post.category}</span>
+                <h3 className="text-xl font-bold text-slate-900 mt-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">{post.title.en}</h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
-  </div>
-);
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -58,6 +142,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/tours" element={<TourListingPage />} />
                 <Route path="/tours/:slug" element={<TourDetailPage />} />
+                <Route path="/blog" element={<BlogListingPage />} />
                 <Route path="/login" element={<div className="p-20 text-center">Login Page Placeholder</div>} />
                 <Route path="/register" element={<div className="p-20 text-center">Registration Page Placeholder</div>} />
                 <Route path="/booking/success" element={<BookingSuccessPage />} />

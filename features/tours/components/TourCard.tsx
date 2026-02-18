@@ -2,7 +2,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Clock, Users, MapPin } from 'lucide-react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Tour } from '../types';
 import { getTranslation, useFormattedPrice } from '../../../utils/currency';
 import { useAppStore } from '../../../store/useAppStore';
@@ -23,13 +22,12 @@ export const TourCard: React.FC<TourCardProps> = ({ tour }) => {
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-xl transition-shadow duration-300 group">
-      <Link to={`/tours/${tour.slug}`} className="block relative aspect-[4/3] overflow-hidden">
-        <LazyLoadImage 
+      <Link to={`/tours/${tour.slug}`} className="block relative aspect-[4/3] overflow-hidden bg-slate-100">
+        <img 
           src={tour.images?.[0] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=600'} 
           alt={title}
-          effect="blur"
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          wrapperClassName="w-full h-full block"
         />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-indigo-600 shadow-sm">
           {tour.difficulty.toUpperCase()}
