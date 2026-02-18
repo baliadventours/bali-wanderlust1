@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray, FormProvider, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { 
   Save, X, Plus, Trash2, Image as ImageIcon, 
-  MapPin, Tag, Info, List, DollarSign, Calendar, HelpCircle, Star, 
-  ShieldCheck, Loader2, Upload, MessageSquare, ListTodo, Link as LinkIcon,
-  CheckCircle, ArrowLeft, AlertCircle, Database, Users as UsersIcon
+  Info, List, DollarSign, Calendar, ShieldCheck, Loader2, Upload, MessageSquare, ListTodo,
+  CheckCircle, ArrowLeft, AlertCircle, Database, Users as UsersIcon, Tag
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -26,7 +25,6 @@ const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
   </button>
 );
 
-// Nested Tiers Field Array for cleaner logic
 const PricingTierEditor = ({ packageIndex, control, register }: any) => {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -142,7 +140,7 @@ export const TourEditor: React.FC = () => {
         booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : (tour.booking_policy || { en: '' }),
         pricing_packages: tour.pricing_packages?.map((p: any) => ({
           ...p,
-          price_tiers: p.price_tiers || []
+          price_tiers: Array.isArray(p.price_tiers) ? p.price_tiers : []
         })) || []
       });
     }
@@ -164,7 +162,7 @@ export const TourEditor: React.FC = () => {
     try {
       const url = await uploadToImgBB(file);
       callback(url);
-    } catch (err) { alert("Upload failed. Ensure VITE_IMGBB_API_KEY is configured."); } finally { setIsUploading(false); }
+    } catch (err) { alert("Upload failed."); } finally { setIsUploading(false); }
   };
 
   const onSubmit = async (data: any) => {
@@ -177,30 +175,13 @@ export const TourEditor: React.FC = () => {
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
 
   if (error || (!tour && !isCreatePage)) {
-    const dbError = (error as any);
     return (
       <div className="h-screen flex flex-col items-center justify-center text-center p-8 bg-slate-50">
         <div className="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 text-rose-500 shadow-sm border border-rose-100">
-           {error ? <Database className="w-10 h-10" /> : <AlertCircle className="w-10 h-10" />}
+           <AlertCircle className="w-10 h-10" />
         </div>
-        <h2 className="text-2xl font-black text-slate-900 mb-2">
-          {error ? 'Database Query Failed' : 'Expedition Not Found'}
-        </h2>
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-lg mb-8">
-           <p className="text-slate-500 text-sm font-medium leading-relaxed">
-             {error ? (
-               <>
-                 <span className="font-bold text-rose-600 block mb-2 underline">Technical Reason:</span>
-                 <code>{dbError?.message || 'Unknown database exception'}</code>
-                 <span className="block mt-4 text-[10px] uppercase tracking-widest text-slate-400">
-                   {dbError?.hint || 'Check if all sub-tables are created in Supabase SQL editor.'}
-                 </span>
-               </>
-             ) : (
-               `We couldn't retrieve the record for ID: ${id}. Ensure the ID is a valid UUID and your user profile has 'admin' privileges.`
-             )}
-           </p>
-        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Expedition Data Unavailable</h2>
+        <p className="text-slate-500 text-sm font-medium mb-8 max-w-md">We couldn't retrieve the record or the system is experiencing a synchronization issue. Please check your network or try again.</p>
         <div className="flex gap-4">
           <button onClick={() => navigate('/admin/tours')} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 transition-all">
             <ArrowLeft className="w-4 h-4" /> Back to Inventory
@@ -318,7 +299,7 @@ export const TourEditor: React.FC = () => {
                      {meta.tours.filter(t => t.id !== id).map(t => (
                        <label key={t.id} className="flex items-center gap-3 p-4 bg-slate-50 border rounded-xl cursor-pointer hover:bg-slate-100 transition-colors border-slate-200">
                          <input type="checkbox" {...methods.register('related_tour_ids')} value={t.id} className="w-4 h-4 rounded text-emerald-600" />
-                         <span className="text-xs font-bold text-slate-700">{t.title?.en || t.title}</span>
+                         <span className="text-xs font-bold text-slate-700">{typeof t.title === 'string' ? t.title : (t.title?.en || 'Untitled')}</span>
                        </label>
                      ))}
                    </div>
@@ -377,7 +358,6 @@ export const TourEditor: React.FC = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Basic Details */}
                       <div className="space-y-6">
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Display Name</label>
@@ -393,12 +373,11 @@ export const TourEditor: React.FC = () => {
                             {...methods.register(`pricing_packages.${index}.description`)} 
                             rows={3}
                             className="w-full p-3 bg-white border rounded-xl text-xs outline-none" 
-                            placeholder="Briefly describe what this specific package offers (e.g. Includes lunch and fast-track entry)" 
+                            placeholder="Briefly describe what this specific package offers" 
                           />
                         </div>
                       </div>
 
-                      {/* Tiers Editor */}
                       <PricingTierEditor 
                         packageIndex={index} 
                         control={methods.control} 
@@ -464,7 +443,7 @@ export const TourEditor: React.FC = () => {
               <div className="space-y-8 animate-in fade-in">
                  <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Crucial Information (EN)</label>
-                    <textarea {...methods.register('important_info.en')} rows={6} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none" placeholder="e.g. Bring extra clothes, sunscreen, water..." />
+                    <textarea {...methods.register('important_info.en')} rows={6} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none" placeholder="e.g. Bring extra clothes..." />
                  </div>
                  <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Booking Protocol (EN)</label>
@@ -515,5 +494,3 @@ export const TourEditor: React.FC = () => {
         </div>
       </form>
     </FormProvider>
-  );
-};

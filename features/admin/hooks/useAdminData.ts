@@ -136,8 +136,15 @@ export function useAdminTour(id?: string) {
           .maybeSingle();
 
         if (error) {
-          console.error("Supabase Admin Tour Query Error:", error);
-          throw error;
+          // If the join fails, try a simpler select to at least get core data
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('tours')
+            .select(`*`)
+            .eq('id', id)
+            .maybeSingle();
+            
+          if (simpleError || !simpleData) throw error || simpleError;
+          return { ...simpleData, title: simpleData.title || { en: '' }, description: simpleData.description || { en: '' } };
         }
         
         if (!data) return null;
