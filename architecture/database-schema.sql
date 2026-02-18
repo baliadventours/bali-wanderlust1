@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- REPAIR STATUS COLUMN
+-- REPAIR STATUS COLUMN (If table existed before enum/column was added)
 DO $$ 
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tours' AND column_name='status') THEN
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.tour_itineraries (
 
 CREATE TABLE IF NOT EXISTS public.tour_inclusions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tour_id REFERENCES public.tours(id) ON DELETE CASCADE,
+    tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     type inclusion_type DEFAULT 'include'
 );
@@ -166,8 +166,8 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name, email, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'admin') -- SETTING AS ADMIN FOR INITIAL SETUP
-  ON CONFLICT (id) DO UPDATE SET role = 'admin'; -- ENSURE EXISTING USER BECOMES ADMIN
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'admin')
+  ON CONFLICT (id) DO UPDATE SET role = 'admin', full_name = EXCLUDED.full_name, email = EXCLUDED.email;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -176,6 +176,3 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- MANUAL ELEVATION HELPER: Run this if you are already logged in but not admin
--- UPDATE profiles SET role = 'admin' WHERE email = 'your-email@example.com';
