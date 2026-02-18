@@ -55,16 +55,22 @@ export const LoginForm: React.FC = () => {
   };
 
   const handleDemoAdmin = () => {
-    setAuth(
-      { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
-      { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
-    );
-    navigate('/admin');
+    setEmail('admin@toursphere.com');
+    setPassword('password123');
+    setLoading(true);
+    setTimeout(() => {
+      setAuth(
+        { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+        { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+      );
+      navigate('/admin');
+      setLoading(false);
+    }, 500);
   };
 
   return (
     <div className="max-w-md w-full mx-auto p-10 bg-white rounded-[10px] border border-slate-200 shadow-2xl">
-      <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+      <h2 className="text-3xl font-bold text-slate-900 mb-2 font-jakarta">Welcome Back</h2>
       <p className="text-slate-500 mb-10 text-sm font-medium">Log in to manage your expeditions.</p>
       
       <form onSubmit={handleLogin} className="space-y-6">
@@ -111,7 +117,7 @@ export const LoginForm: React.FC = () => {
           <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
             <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
             <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
-              <p className="mb-1">Demo Access Available:</p>
+              <p className="mb-1 underline">Demo Admin Credentials:</p>
               <p>Email: admin@toursphere.com</p>
               <p>Pass: password123</p>
             </div>
@@ -121,7 +127,7 @@ export const LoginForm: React.FC = () => {
             className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
           >
             <ShieldCheck className="w-4 h-4" />
-            Quick Admin Login
+            Sign in as Admin (Demo)
           </button>
         </div>
       )}
@@ -163,7 +169,7 @@ export const RegisterForm: React.FC = () => {
 
   return (
     <div className="max-w-md w-full mx-auto p-10 bg-white rounded-[10px] border border-slate-200 shadow-2xl">
-      <h2 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h2>
+      <h2 className="text-3xl font-bold text-slate-900 mb-2 font-jakarta">Create Account</h2>
       <p className="text-slate-500 mb-10 text-sm font-medium">Start your journey with TourSphere today.</p>
       
       <form onSubmit={handleRegister} className="space-y-6">
