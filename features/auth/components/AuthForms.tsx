@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { supabase, isConfigured } from '../../../lib/supabase';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { Loader2, Mail, Lock, User, ShieldCheck, Info } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ShieldCheck, Info, AlertTriangle } from 'lucide-react';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -21,7 +21,6 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    // 1. Only use Demo Bypass if Supabase is NOT configured
     if (!isConfigured) {
       if (email.trim() === 'admin@toursphere.com' && password === 'password123') {
         setTimeout(() => {
@@ -40,24 +39,23 @@ export const LoginForm: React.FC = () => {
       return;
     }
     
-    // 2. Production Login (Must use real Supabase Auth)
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
       
-      // The session change will be picked up by AuthProvider, but we navigate now
+      // Navigate immediately, AuthProvider handles the store update
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
+      setError(err.message || 'Authentication failed. If this is your first time in Production, please Register first.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDemoAdmin = () => {
+    setEmail('admin@toursphere.com');
+    setPassword('password123');
     if (!isConfigured) {
-      setEmail('admin@toursphere.com');
-      setPassword('password123');
       setLoading(true);
       setTimeout(() => {
         setAuth(
@@ -67,10 +65,6 @@ export const LoginForm: React.FC = () => {
         navigate('/admin');
         setLoading(false);
       }, 400);
-    } else {
-      // In production, just fill the fields to help the user
-      setEmail('admin@toursphere.com');
-      setPassword('password123');
     }
   };
 
@@ -86,6 +80,15 @@ export const LoginForm: React.FC = () => {
           </div>
         )}
         
+        {isConfigured && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-[10px] flex gap-3 items-start">
+             <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+             <div className="text-[10px] text-amber-800 font-bold uppercase leading-relaxed">
+               First time here? You must <Link to="/register" className="underline text-amber-900">Register</Link> an account in your project before logging in.
+             </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Mail className="w-3.5 h-3.5" /> Email Address
@@ -126,9 +129,8 @@ export const LoginForm: React.FC = () => {
         <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
           <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
           <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
-            <p className="mb-1 underline">{isConfigured ? 'Production Mode:' : 'Demo Mode:'}</p>
-            <p>Use your real Supabase credentials.</p>
-            {!isConfigured && <p>Pass: password123</p>}
+            <p className="mb-1 underline">{isConfigured ? 'Production Instance Active:' : 'UI Preview Mode:'}</p>
+            <p>Authentication is handled by your Supabase project.</p>
           </div>
         </div>
         {!isConfigured && (
@@ -177,7 +179,7 @@ export const RegisterForm: React.FC = () => {
       });
       if (signUpError) throw signUpError;
       
-      alert("Registration successful! Please check your email for a confirmation link (if enabled) or log in.");
+      alert("Registration successful! You can now log in. All new users in this project are automatically granted 'admin' status.");
       navigate('/login');
     } catch (err: any) {
       setError(err.message);
