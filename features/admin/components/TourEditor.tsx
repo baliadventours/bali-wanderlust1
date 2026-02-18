@@ -4,7 +4,7 @@ import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { 
   Save, X, Plus, Trash2, Image as ImageIcon, 
   Info, List, DollarSign, Calendar, ShieldCheck, Loader2, Upload, MessageSquare, ListTodo,
-  CheckCircle, ArrowLeft, AlertCircle, Database, Users as UsersIcon, Tag
+  CheckCircle, ArrowLeft, AlertCircle, Users as UsersIcon, Tag
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -138,10 +138,10 @@ export const TourEditor: React.FC = () => {
         description: typeof tour.description === 'string' ? { en: tour.description } : (tour.description || { en: '' }),
         important_info: typeof tour.important_info === 'string' ? { en: tour.important_info } : (tour.important_info || { en: '' }),
         booking_policy: typeof tour.booking_policy === 'string' ? { en: tour.booking_policy } : (tour.booking_policy || { en: '' }),
-        pricing_packages: tour.pricing_packages?.map((p: any) => ({
+        pricing_packages: (tour.pricing_packages || []).map((p: any) => ({
           ...p,
           price_tiers: Array.isArray(p.price_tiers) ? p.price_tiers : []
-        })) || []
+        }))
       });
     }
   }, [tour, methods]);

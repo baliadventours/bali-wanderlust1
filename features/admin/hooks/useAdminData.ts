@@ -95,6 +95,7 @@ export function useAdminTour(id?: string) {
       if (!id || id === 'create') return null;
       
       if (!isConfigured) {
+        // Preview data matches structure exactly
         return {
           id,
           title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
@@ -112,7 +113,7 @@ export function useAdminTour(id?: string) {
           faqs: [{ question: 'Is gear provided?', answer: 'Yes, full gear is included.' }],
           reviews: [{ reviewer_name: 'Adventure Seekers', rating: 5, comment: 'Simply breathtaking.' }],
           facts: [{ fact_id: 'f-dur', value: '8 Hours' }],
-          pricing_packages: [{ package_name: 'Standard', base_price: 45, min_people: 1, max_people: 10, price_tiers: [] }],
+          pricing_packages: [{ package_name: 'Standard', description: 'Base package', price_tiers: [{people: 1, price: 45}] }],
           related_tour_ids: []
         };
       }
@@ -136,18 +137,15 @@ export function useAdminTour(id?: string) {
           .maybeSingle();
 
         if (error) {
-          console.error("Supabase deep query failed, trying basic select:", error);
-          const { data: basicData, error: basicError } = await supabase
-            .from('tours')
-            .select('*')
-            .eq('id', id)
-            .maybeSingle();
+          console.error("Supabase join query failed, trying simple select:", error);
+          const { data: basicData, error: basicError } = await supabase.from('tours').select('*').eq('id', id).maybeSingle();
           if (basicError || !basicData) throw error || basicError;
           return { ...basicData, title: typeof basicData.title === 'string' ? { en: basicData.title } : (basicData.title || { en: '' }) };
         }
         
         if (!data) return null;
         
+        // Defensive data normalization layer
         return {
           ...data,
           title: typeof data.title === 'string' ? { en: data.title } : (data.title || { en: '' }),
@@ -162,14 +160,14 @@ export function useAdminTour(id?: string) {
           faqs: data.faqs || [],
           reviews: data.reviews || [],
           facts: data.facts || [],
-          pricing_packages: data.pricing_packages?.map((p: any) => ({
+          pricing_packages: (data.pricing_packages || []).map((p: any) => ({
             ...p,
             price_tiers: Array.isArray(p.price_tiers) ? p.price_tiers : []
-          })) || [],
-          related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
+          })),
+          related_tour_ids: (data.related_tours || []).map((rt: any) => rt.related_tour_id)
         };
       } catch (err) {
-        console.error("Admin Tour Detail Error:", err);
+        console.error("Admin Tour Detail Hook Crash:", err);
         throw err;
       }
     },
