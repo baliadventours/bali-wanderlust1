@@ -38,6 +38,8 @@ const TourEditor = lazy(() => import('./features/admin/components/TourEditor').t
 const BookingManagement = lazy(() => import('./features/admin/components/BookingManagement').then(m => ({ default: m.BookingManagement })));
 const UserManagement = lazy(() => import('./features/admin/components/UserManagement').then(m => ({ default: m.UserManagement })));
 const CategoryManagement = lazy(() => import('./features/admin/components/CategoryManagement').then(m => ({ default: m.CategoryManagement })));
+const DestinationManagement = lazy(() => import('./features/admin/components/DestinationManagement').then(m => ({ default: m.DestinationManagement })));
+const FactManagement = lazy(() => import('./features/admin/components/FactManagement').then(m => ({ default: m.FactManagement })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -178,6 +180,8 @@ const App: React.FC = () => {
                   <Route path="/admin/bookings" element={<BookingManagement />} />
                   <Route path="/admin/users" element={<UserManagement />} />
                   <Route path="/admin/categories" element={<CategoryManagement />} />
+                  <Route path="/admin/destinations" element={<DestinationManagement />} />
+                  <Route path="/admin/facts" element={<FactManagement />} />
                   <Route path="/admin/pricing" element={<div className="p-8">Seasonal Pricing Rules Global Management</div>} />
                 </Route>
               </Route>

@@ -1,88 +1,56 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
-import { Tour } from '../../tours/types';
 
 export function useTourMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: any) => {
-      const isNew = !data.id || data.id === 'new';
-      
-      // 1. Core Tour Data
-      const tourPayload = {
-        title: data.title,
+      const isNew = !data.id || data.id === 'create';
+      const tourId = isNew ? (await supabase.from('tours').insert({ 
+        title: data.title, 
         slug: data.slug,
-        description: data.description,
         status: data.status,
+        description: data.description,
         category_id: data.category_id,
         destination_id: data.destination_id,
-        updated_at: new Date().toISOString()
+        important_info: data.important_info,
+        booking_policy: data.booking_policy
+      }).select('id').single()).data?.id : data.id;
+
+      if (!isNew) {
+        await supabase.from('tours').update({
+          title: data.title,
+          slug: data.slug,
+          status: data.status,
+          description: data.description,
+          category_id: data.category_id,
+          destination_id: data.destination_id,
+          important_info: data.important_info,
+          booking_policy: data.booking_policy
+        }).eq('id', tourId);
+      }
+
+      // Helper for Syncing Child Tables
+      const syncTable = async (table: string, items: any[], mapFn: (item: any) => any) => {
+        await supabase.from(table).delete().eq('tour_id', tourId);
+        if (items?.length > 0) {
+          await supabase.from(table).insert(items.map(i => ({ ...mapFn(i), tour_id: tourId })));
+        }
       };
 
-      let tourId = data.id;
-
-      if (isNew) {
-        const { data: newTour, error: insertError } = await supabase
-          .from('tours')
-          .insert(tourPayload)
-          .select('id')
-          .single();
-        if (insertError) throw insertError;
-        tourId = newTour.id;
-      } else {
-        const { error: updateError } = await supabase
-          .from('tours')
-          .update(tourPayload)
-          .eq('id', tourId);
-        if (updateError) throw updateError;
-      }
-
-      // 2. Sync Child Tables (Differencing Logic)
-      // For a production-ready app, we replace child records to simplify the "Unit of Work"
-      
-      // Sync Itineraries
-      if (data.itineraries) {
-        await supabase.from('tour_itineraries').delete().eq('tour_id', tourId);
-        if (data.itineraries.length > 0) {
-          await supabase.from('tour_itineraries').insert(
-            data.itineraries.map((it: any, index: number) => ({
-              ...it,
-              tour_id: tourId,
-              sort_order: index
-            }))
-          );
-        }
-      }
-
-      // Sync Gallery
-      if (data.gallery) {
-        await supabase.from('tour_gallery').delete().eq('tour_id', tourId);
-        if (data.gallery.length > 0) {
-          await supabase.from('tour_gallery').insert(
-            data.gallery.map((g: any, index: number) => ({
-              ...g,
-              tour_id: tourId,
-              sort_order: index
-            }))
-          );
-        }
-      }
-
-      // Sync Highlights
-      if (data.highlights) {
-        await supabase.from('tour_highlights').delete().eq('tour_id', tourId);
-        if (data.highlights.length > 0) {
-          await supabase.from('tour_highlights').insert(
-            data.highlights.map((h: any, index: number) => ({
-              content: h.content || h,
-              tour_id: tourId,
-              sort_order: index
-            }))
-          );
-        }
-      }
+      await Promise.all([
+        syncTable('tour_itineraries', data.itineraries, i => ({ title: i.title, description: i.description, day_number: i.day_number, image_url: i.image_url })),
+        syncTable('tour_gallery', data.gallery, g => ({ image_url: g.image_url })),
+        syncTable('tour_highlights', data.highlights, h => ({ content: h.content })),
+        syncTable('tour_faq', data.faqs, f => ({ question: f.question, answer: f.answer })),
+        syncTable('tour_inclusions', data.inclusions, i => ({ content: i.content, type: i.type })),
+        syncTable('tour_reviews', data.reviews, r => ({ reviewer_name: r.reviewer_name, rating: r.rating, comment: r.comment })),
+        syncTable('tour_fact_values', data.facts, f => ({ fact_id: f.fact_id, value: f.value })),
+        // Pricing Packages sync logic is more complex in production, simplified here
+        syncTable('tour_pricing_packages', data.pricing_packages, p => ({ package_name: p.package_name, base_price: p.base_price, min_people: p.min_people, max_people: p.max_people }))
+      ]);
 
       return { id: tourId };
     },

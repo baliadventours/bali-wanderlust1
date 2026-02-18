@@ -46,7 +46,6 @@ export function useTourDetail(slug: string) {
               'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=600'
             ]
           },
-          // ... all other 17 tours will match this logic
         ];
 
         const match = baliToursPreview.find(t => t.slug === slug) || baliToursPreview[0];
@@ -63,13 +62,13 @@ export function useTourDetail(slug: string) {
           max_participants: 12,
           difficulty: 'beginner',
           images: match.images,
+          status: 'published',
           is_published: true,
           category_id: 'cat-1',
           destination_id: 'dest-1',
           tour_type_id: 'type-1',
           avg_rating: 4.8,
           review_count: 109,
-          // Fix: Added missing id and slug to satisfy Destination type
           destination: { id: 'ubud-bali', slug: 'ubud-bali', name: { en: 'Ubud, Bali' } },
           highlights: [
             'Have a safe time rafting with the help of a trained guide.',

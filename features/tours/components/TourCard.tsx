@@ -17,7 +17,8 @@ export const TourCard: React.FC<TourCardProps> = ({ tour }) => {
   const formatPrice = useFormattedPrice();
   
   const title = getTranslation(tour.title, language);
-  const destination = getTranslation(tour.destination?.name, language) || 'Global';
+  // Safely handle destination name which can be an object or a string
+  const destination = getTranslation(tour.destination?.name as Record<string, string>, language) || 'Global';
   const duration = Math.round(tour.duration_minutes / 60);
 
   return (
@@ -30,7 +31,7 @@ export const TourCard: React.FC<TourCardProps> = ({ tour }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-[10px] text-[10px] font-bold text-emerald-600 shadow-sm uppercase tracking-wider">
-          {tour.difficulty.toUpperCase()}
+          {tour.difficulty?.toUpperCase()}
         </div>
       </Link>
       

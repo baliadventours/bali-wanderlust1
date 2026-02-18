@@ -49,14 +49,14 @@ export const TourManagement: React.FC = () => {
         {filtered?.map((tour) => (
           <div key={tour.id} className="bg-white rounded-[10px] border border-slate-200 overflow-hidden group hover:border-emerald-200 transition-all">
             <div className="aspect-video relative overflow-hidden bg-slate-100">
-              <img src={tour.images[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img src={tour.images?.[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={tour.title.en} />
               <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${tour.is_published ? 'bg-emerald-500 text-white' : 'bg-slate-400 text-white'}`}>
                 {tour.is_published ? 'Live' : 'Draft'}
               </div>
             </div>
             <div className="p-5">
               <div className="flex items-center gap-1.5 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                <MapPin className="w-3 h-3" /> {tour.destination?.name.en || 'Global'}
+                <MapPin className="w-3 h-3" /> {(tour.destination?.name as Record<string, string>)?.en || 'Global'}
               </div>
               <h3 className="text-md font-bold text-slate-900 mb-4 line-clamp-1">{tour.title.en}</h3>
               <div className="flex items-center justify-between pt-4 border-t border-slate-50">

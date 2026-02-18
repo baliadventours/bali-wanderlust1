@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe } from 'lucide-react';
+import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe, ListTodo } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { LocalePicker } from '../shared/LocalePicker';
@@ -124,8 +124,9 @@ export const DashboardLayout: React.FC = () => {
     { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, roles: ['customer'] },
     { type: 'divider', roles: ['admin', 'editor'] },
     { label: 'Tour Inventory', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
-    { label: 'Categories', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
-    { label: 'Destinations', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
+    { label: 'Hubs/Destinations', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
+    { label: 'Taxonomy/Cats', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
+    { label: 'Attribute Registry', path: '/admin/facts', icon: ListTodo, roles: ['admin', 'editor'] },
     { label: 'Booking Orders', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
     { label: 'Staff & Users', path: '/admin/users', icon: Users, roles: ['admin'] },
     { label: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['customer', 'admin', 'editor'] },
@@ -144,7 +145,7 @@ export const DashboardLayout: React.FC = () => {
             <span>TourSphere</span>
           </Link>
         </div>
-        <nav className="flex-grow px-4 space-y-1">
+        <nav className="flex-grow px-4 space-y-1 overflow-y-auto no-scrollbar pb-10">
           {filteredMenu.map((item, idx) => {
             if (item.type === 'divider') return <div key={idx} className="h-px bg-slate-100 my-4" />;
             return (

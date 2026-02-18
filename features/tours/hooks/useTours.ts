@@ -11,7 +11,7 @@ export function useTours(filters: TourFilters) {
       if (!isConfigured) {
         await new Promise(r => setTimeout(r, 800));
         
-        // Define 20 Bali specific tours for the preview
+        // Define 20 Bali specific tours for the preview with localized content
         const baliTours: Tour[] = [
           {
             id: 'b1', slug: 'ubud-jungle-highlights',
@@ -19,8 +19,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace.' },
             base_price_usd: 45, duration_minutes: 480, max_participants: 10, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho', status: 'published',
             avg_rating: 4.9, review_count: 1205, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -29,8 +28,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Hike to the summit of an active volcano and watch the sunrise.' },
             base_price_usd: 65, duration_minutes: 600, max_participants: 15, difficulty: 'intermediate',
             images: ['https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik', status: 'published',
             avg_rating: 4.8, review_count: 850, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -39,8 +37,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'The ultimate day trip to the most famous coastline in the world.' },
             base_price_usd: 85, duration_minutes: 720, max_participants: 8, difficulty: 'intermediate',
             images: ['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-pho',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-pho', status: 'published',
             avg_rating: 4.9, review_count: 2100, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -49,8 +46,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'A dramatic performance on a cliff edge overlooking the Indian Ocean.' },
             base_price_usd: 35, duration_minutes: 300, max_participants: 20, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1558005530-d7c4ec1630aa?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-spi',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-spi', status: 'published',
             avg_rating: 4.7, review_count: 540, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -59,8 +55,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Get the iconic photo between the Hindu gates.' },
             base_price_usd: 55, duration_minutes: 600, max_participants: 10, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1537953391648-762d01df3c14?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho', status: 'published',
             avg_rating: 4.5, review_count: 980, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -69,8 +64,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Paddle through wild rapids and past hidden waterfalls.' },
             base_price_usd: 50, duration_minutes: 240, max_participants: 30, difficulty: 'intermediate',
             images: ['https://images.unsplash.com/photo-1530122622335-d40394391ea5?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat', status: 'published',
             avg_rating: 4.6, review_count: 1100, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -79,8 +73,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Participate in a traditional purification ritual.' },
             base_price_usd: 40, duration_minutes: 360, max_participants: 6, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-spi',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-spi', status: 'published',
             avg_rating: 4.9, review_count: 320, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -89,8 +82,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Visit the temple on the sea, one of Bali\'s icons.' },
             base_price_usd: 30, duration_minutes: 300, max_participants: 15, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho', status: 'published',
             avg_rating: 4.7, review_count: 720, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -99,8 +91,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'A sunrise boat trip to see wild dolphins.' },
             base_price_usd: 45, duration_minutes: 480, max_participants: 12, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1544928147-79a2dbc1f389?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat', status: 'published',
             avg_rating: 4.4, review_count: 430, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -109,19 +100,16 @@ export function useTours(filters: TourFilters) {
             description: { en: 'An exclusive candlelight dinner inside a natural cave.' },
             base_price_usd: 450, duration_minutes: 180, max_participants: 2, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-spi',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-spi', status: 'published',
             avg_rating: 5.0, review_count: 15, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
-          // Adding 10 more to reach 20...
           {
             id: 'b11', slug: 'breakfast-orangutan',
             title: { en: 'Breakfast with Orangutans', es: 'Desayuno con Orangutanes' },
             description: { en: 'Start your day with the kings of the jungle.' },
             base_price_usd: 75, duration_minutes: 180, max_participants: 20, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1540206351-d6465b3ac5c1?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo', status: 'published',
             avg_rating: 4.8, review_count: 210, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -130,8 +118,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Master the waves of the Indian Ocean.' },
             base_price_usd: 40, duration_minutes: 120, max_participants: 4, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat', status: 'published',
             avg_rating: 4.9, review_count: 89, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -140,8 +127,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Visit Bali\'s tallest and most majestic waterfall.' },
             base_price_usd: 60, duration_minutes: 480, max_participants: 8, difficulty: 'advanced',
             images: ['https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik', status: 'published',
             avg_rating: 4.9, review_count: 156, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -150,8 +136,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Eat like a local in the heart of Seminyak.' },
             base_price_usd: 35, duration_minutes: 180, max_participants: 12, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo', status: 'published',
             avg_rating: 4.7, review_count: 67, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -160,8 +145,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Walk through the untouched rice terraces of East Bali.' },
             base_price_usd: 40, duration_minutes: 300, max_participants: 10, difficulty: 'intermediate',
             images: ['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-hik',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-hik', status: 'published',
             avg_rating: 4.9, review_count: 34, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -170,8 +154,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Learn the secrets of Balinese spices.' },
             base_price_usd: 45, duration_minutes: 240, max_participants: 15, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo', status: 'published',
             avg_rating: 5.0, review_count: 128, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -180,8 +163,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Ride through jungles, tunnels, and mud.' },
             base_price_usd: 55, duration_minutes: 180, max_participants: 20, difficulty: 'intermediate',
             images: ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat', status: 'published',
             avg_rating: 4.6, review_count: 88, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -190,8 +172,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'E-bike tour through spectacular scenery.' },
             base_price_usd: 65, duration_minutes: 240, max_participants: 10, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1444464666168-49d633b867ad?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik', status: 'published',
             avg_rating: 4.9, review_count: 56, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -200,8 +181,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Discover the best marine life in Bali.' },
             base_price_usd: 95, duration_minutes: 600, max_participants: 8, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1544551763-47a15950c57f?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat', status: 'published',
             avg_rating: 4.8, review_count: 22, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           },
           {
@@ -210,8 +190,7 @@ export function useTours(filters: TourFilters) {
             description: { en: 'Breathtaking aerial views of Uluwatu and Tanah Lot.' },
             base_price_usd: 550, duration_minutes: 20, max_participants: 4, difficulty: 'beginner',
             images: ['https://images.unsplash.com/photo-1464037862834-ee5772642398?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-pho',
-            // Fix: Added missing id and slug to satisfy Destination type
+            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-pho', status: 'published',
             avg_rating: 5.0, review_count: 8, destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } }
           }
         ];

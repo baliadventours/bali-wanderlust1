@@ -47,7 +47,7 @@ export const TourDetailPage: React.FC = () => {
 
   const title = getTranslation(tour.title, language);
   const description = getTranslation(tour.description, language);
-  const destination = getTranslation(tour.destination?.name, language) || 'Ubud, Bali';
+  const destination = getTranslation(tour.destination?.name as Record<string, string>, language) || 'Ubud, Bali';
 
   const sections = [
     { id: 'overview', label: 'Overview' },
@@ -73,7 +73,7 @@ export const TourDetailPage: React.FC = () => {
                 <div className="flex items-center gap-1 text-emerald-600 font-bold">
                   <Star className="w-4 h-4 fill-emerald-600" />
                   <span>{tour.avg_rating || '5.0'}</span>
-                  <span className="text-slate-400 font-medium">({tour.review_count})</span>
+                  <span className="text-slate-400 font-medium">({tour.review_count || 0})</span>
                 </div>
                 <span className="text-slate-200">|</span>
                 <div className="flex items-center gap-1 text-slate-500">
@@ -83,7 +83,7 @@ export const TourDetailPage: React.FC = () => {
                 <span className="text-slate-200">|</span>
                 <div className="flex items-center gap-1 text-slate-500">
                    <Clock className="w-4 h-4" />
-                   <span>4 - 5</span>
+                   <span>{Math.round(tour.duration_minutes / 60)}h</span>
                 </div>
              </div>
              <div className="flex items-center gap-2">
@@ -98,21 +98,21 @@ export const TourDetailPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 mb-8">
         <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[450px]">
           <div className="col-span-2 row-span-2 rounded-[10px] overflow-hidden bg-slate-100">
-            <img src={tour.images[0]} className="w-full h-full object-cover" alt="Main" />
+            <img src={tour.images?.[0]} className="w-full h-full object-cover" alt="Main" />
           </div>
           <div className="col-span-1 row-span-1 rounded-[10px] overflow-hidden bg-slate-100">
-            <img src={tour.images[1] || tour.images[0]} className="w-full h-full object-cover" alt="G1" />
+            <img src={tour.images?.[1] || tour.images?.[0]} className="w-full h-full object-cover" alt="G1" />
           </div>
           <div className="col-span-1 row-span-1 rounded-[10px] overflow-hidden bg-slate-100">
-            <img src={tour.images[2] || tour.images[0]} className="w-full h-full object-cover" alt="G2" />
+            <img src={tour.images?.[2] || tour.images?.[0]} className="w-full h-full object-cover" alt="G2" />
           </div>
           <div className="col-span-1 row-span-1 rounded-[10px] overflow-hidden bg-slate-100">
-            <img src={tour.images[3] || tour.images[0]} className="w-full h-full object-cover" alt="G3" />
+            <img src={tour.images?.[3] || tour.images?.[0]} className="w-full h-full object-cover" alt="G3" />
           </div>
           <div className="col-span-1 row-span-1 rounded-[10px] overflow-hidden bg-slate-100 relative group cursor-pointer">
-            <img src={tour.images[0]} className="w-full h-full object-cover brightness-50" alt="G4" />
+            <img src={tour.images?.[0]} className="w-full h-full object-cover brightness-50" alt="G4" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <span className="text-lg font-bold">+6</span>
+              <span className="text-lg font-bold">+{Math.max(0, (tour.images?.length || 0) - 4)}</span>
               <span className="text-[10px] uppercase font-bold tracking-widest">More photos</span>
             </div>
           </div>
@@ -157,7 +157,7 @@ export const TourDetailPage: React.FC = () => {
                   <Clock className="w-5 h-5 text-emerald-600 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-sm text-slate-900">Duration</h4>
-                    <p className="text-slate-500 text-xs">4 - 5 hours of activity.</p>
+                    <p className="text-slate-500 text-xs">{Math.round(tour.duration_minutes / 60)} hours of activity.</p>
                   </div>
                 </div>
               </div>
@@ -174,10 +174,10 @@ export const TourDetailPage: React.FC = () => {
             <section id="highlights" className="scroll-mt-40">
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Highlights</h2>
               <ul className="grid grid-cols-1 gap-4">
-                {tour.highlights?.map((h, i) => (
+                {tour.highlights?.map((h: any, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
                     <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                    <span>{h}</span>
+                    <span>{typeof h === 'string' ? h : h.content}</span>
                   </li>
                 ))}
               </ul>
@@ -195,8 +195,8 @@ export const TourDetailPage: React.FC = () => {
                       <div className="w-px h-full bg-slate-100 mt-2" />
                     </div>
                     <div className="pb-8">
-                      <h4 className="font-bold text-slate-900 mb-2">{getTranslation(item.title, language)}</h4>
-                      <p className="text-slate-500 text-sm leading-relaxed">{getTranslation(item.description, language)}</p>
+                      <h4 className="font-bold text-slate-900 mb-2">{getTranslation(item.title as Record<string, string>, language)}</h4>
+                      <p className="text-slate-500 text-sm leading-relaxed">{getTranslation(item.description as Record<string, string>, language)}</p>
                     </div>
                   </div>
                 ))}
@@ -209,9 +209,9 @@ export const TourDetailPage: React.FC = () => {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Included</h4>
                   <ul className="space-y-3">
-                    {tour.inclusions?.map((inc, i) => (
+                    {tour.inclusions?.map((inc: any, i) => (
                       <li key={i} className="flex items-center gap-2 text-slate-600 text-sm">
-                        <Check className="w-4 h-4 text-emerald-500" /> {inc}
+                        <Check className="w-4 h-4 text-emerald-500" /> {typeof inc === 'string' ? inc : inc.content}
                       </li>
                     ))}
                   </ul>
@@ -219,9 +219,9 @@ export const TourDetailPage: React.FC = () => {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Not included</h4>
                   <ul className="space-y-3">
-                    {tour.exclusions?.map((exc, i) => (
+                    {tour.exclusions?.map((exc: any, i) => (
                       <li key={i} className="flex items-center gap-2 text-slate-400 text-sm">
-                        <X className="w-4 h-4 text-rose-400" /> {exc}
+                        <X className="w-4 h-4 text-rose-400" /> {typeof exc === 'string' ? exc : exc.content}
                       </li>
                     ))}
                   </ul>
