@@ -141,6 +141,15 @@ CREATE TABLE IF NOT EXISTS inquiries (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tour_id UUID REFERENCES tours(id) ON DELETE CASCADE,
+  customer_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  rating INT CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 3. RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN

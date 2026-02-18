@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { 
   Star, Clock, Users, MapPin, Check, X, 
-  MessageCircle, Heart, Share2, Info, ChevronRight 
+  MessageCircle, Heart, Share2, Info, ChevronRight,
+  Loader2, ArrowLeft, SearchX
 } from 'lucide-react';
 import { useTourDetail } from '../hooks/useTourDetail';
 import { BookingWidget } from './BookingWidget';
@@ -16,13 +17,41 @@ import { getTranslation, useFormattedPrice } from '../../../utils/currency';
 
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { data: tour, isLoading, error } = useTourDetail(slug || '');
   const [activeTab, setActiveTab] = useState<'itinerary' | 'reviews' | 'faq'>('itinerary');
   const { t } = useTranslation();
   const { language } = useAppStore();
 
-  if (isLoading) return <div className="p-20 text-center">Loading...</div>;
-  if (error || !tour) return <div className="p-20 text-center">Not found</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Curating Experience...</p>
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+        <div className="bg-white p-12 rounded-[2.5rem] shadow-xl border border-slate-200 text-center max-w-md w-full">
+          <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-300">
+            <SearchX className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Tour Not Found</h2>
+          <p className="text-slate-500 mb-8 font-medium">We couldn't find the expedition you're looking for. It may have been moved or removed.</p>
+          <button 
+            onClick={() => navigate('/tours')}
+            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 transition-all shadow-lg"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Browse Other Tours
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const title = getTranslation(tour.title, language);
   const description = getTranslation(tour.description, language);
@@ -90,7 +119,7 @@ export const TourDetailPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 mb-12">
-        <div className="aspect-[21/9] rounded-3xl overflow-hidden bg-slate-100">
+        <div className="aspect-[21/9] rounded-3xl overflow-hidden bg-slate-100 shadow-inner">
           <img 
             src={tour.images[0]} 
             alt={title} 
@@ -110,7 +139,6 @@ export const TourDetailPage: React.FC = () => {
                 {description}
               </p>
               
-              {/* Inquiry Section placed below description */}
               <div className="mt-12">
                 <InquirySection tourId={tour.id} />
               </div>
@@ -130,8 +158,8 @@ export const TourDetailPage: React.FC = () => {
                 <div className="space-y-8">
                   {tour.itineraries && tour.itineraries.length > 0 ? (
                     tour.itineraries.map((day) => (
-                      <div key={day.id} className="relative pl-12">
-                        <div className="absolute left-0 top-0 w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                      <div key={day.id} className="relative pl-12 group">
+                        <div className="absolute left-0 top-0 w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                           {day.day_number}
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 mb-2">{getTranslation(day.title, language)}</h3>
