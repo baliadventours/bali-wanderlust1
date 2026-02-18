@@ -81,9 +81,18 @@ export function useAdminTour(id?: string) {
           category_id: 'cat-cul',
           destination_id: 'bali',
           important_info: { en: 'Wear hiking boots.' },
-          booking_policy: { en: 'Flexible.' },
-          itineraries: [{ day_number: 1, title: { en: 'Arrival' }, description: { en: 'Settle in.' } }],
-          gallery: [], highlights: [], inclusions: [], faqs: [], reviews: [], facts: [], pricing_packages: [], related_tour_ids: []
+          booking_policy: { en: 'Flexible cancellation.' },
+          itineraries: [
+            { day_number: 1, title: { en: 'Arrival' }, description: { en: 'Settle in at the camp.' }, image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }
+          ],
+          gallery: [{ image_url: 'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=400' }],
+          highlights: [{ content: 'Sacred Monkey Forest visit' }],
+          inclusions: [{ content: 'Private Guide', type: 'include' }],
+          faqs: [{ question: 'Is gear provided?', answer: 'Yes, full gear is included.' }],
+          reviews: [{ reviewer_name: 'Adventure Seekers', rating: 5, comment: 'Simply breathtaking.' }],
+          facts: [{ fact_id: 'f-dur', value: '8 Hours' }],
+          pricing_packages: [{ package_name: 'Standard', base_price: 45, min_people: 1, max_people: 10 }],
+          related_tour_ids: []
         };
       }
 
@@ -106,10 +115,15 @@ export function useAdminTour(id?: string) {
 
         if (error || !data) return null;
         
-        return {
+        // Clean up title/description if they came back as strings (for legacy support)
+        const tour = {
           ...data,
+          title: typeof data.title === 'string' ? { en: data.title } : data.title || { en: '' },
+          description: typeof data.description === 'string' ? { en: data.description } : data.description || { en: '' },
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };
+        
+        return tour;
       } catch (err) {
         return null;
       }

@@ -5,7 +5,7 @@ import {
   Save, X, Plus, Trash2, Image as ImageIcon, 
   MapPin, Tag, Info, List, DollarSign, Calendar, HelpCircle, Star, 
   ShieldCheck, Loader2, Upload, MessageSquare, ListTodo, Link as LinkIcon,
-  CheckCircle
+  CheckCircle, ArrowLeft, AlertCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAdminTour } from '../hooks/useAdminData';
@@ -29,7 +29,7 @@ const TabButton = ({ active, onClick, label, icon: Icon }: any) => (
 export const TourEditor: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: tour, isLoading } = useAdminTour(id);
+  const { data: tour, isLoading, isError } = useAdminTour(id);
   const mutation = useTourMutation();
   const [activeTab, setActiveTab] = useState('basic');
   const [isUploading, setIsUploading] = useState(false);
@@ -114,6 +114,20 @@ export const TourEditor: React.FC = () => {
   };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
+
+  // If tour is not found and we are not in create mode, show 404
+  if (!tour && id !== 'create') {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center text-center p-8">
+        <AlertCircle className="w-16 h-16 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Expedition Not Found</h2>
+        <p className="text-slate-500 mb-8 max-w-sm">We couldn't retrieve the record for ID: {id}. It might have been deleted or the database connection is unstable.</p>
+        <button onClick={() => navigate('/admin/tours')} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Back to Inventory
+        </button>
+      </div>
+    );
+  }
 
   return (
     <FormProvider {...methods}>
