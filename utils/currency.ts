@@ -25,9 +25,13 @@ export function useFormattedPrice() {
 }
 
 /**
- * Helper to extract localized string from JSONB column
+ * Helper to extract localized string from JSONB column.
+ * Bulletproofed to handle strings, objects, or nulls.
  */
-export function getTranslation(data: Record<string, string> | undefined, lang: string): string {
+export function getTranslation(data: any, lang: string): string {
   if (!data) return '';
-  return data[lang] || data['en'] || Object.values(data)[0] || '';
+  if (typeof data === 'string') return data;
+  
+  // Try requested language, then english fallback, then any key
+  return data[lang] || data['en'] || (typeof data === 'object' ? Object.values(data)[0] : '') || '';
 }

@@ -95,6 +95,7 @@ export function useAdminTour(id?: string) {
       if (!id || id === 'create') return null;
       
       if (!isConfigured) {
+        // Mock data uses proper object shapes
         return {
           id,
           title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
@@ -130,31 +131,38 @@ export function useAdminTour(id?: string) {
             reviews:tour_reviews(*),
             facts:tour_fact_values(*),
             pricing_packages:tour_pricing_packages(*),
-            related_tours:related_tours(related_tour_id)
+            related_tours:related_tours!related_tours_tour_id_fkey(related_tour_id)
           `)
           .eq('id', id)
           .maybeSingle();
 
-        if (error) throw error;
+        // Fallback to simple query if joins fail (helps with schema mismatches)
+        if (error) {
+          console.warn("Complex join failed, falling back to simple tour fetch:", error);
+          const { data: basic, error: basicError } = await supabase.from('tours').select('*').eq('id', id).maybeSingle();
+          if (basicError || !basic) throw error || basicError;
+          return { ...basic, title: typeof basic.title === 'string' ? { en: basic.title } : (basic.title || { en: '' }) };
+        }
+        
         if (!data) return null;
         
-        const normalizeTrans = (val: any) => {
+        const normalize = (val: any) => {
           if (!val) return { en: '' };
           if (typeof val === 'string') return { en: val };
           return val;
         };
 
+        // Deep normalization layer to prevent UI crashes
         return {
           ...data,
-          title: normalizeTrans(data.title),
-          description: normalizeTrans(data.description),
-          important_info: normalizeTrans(data.important_info),
-          booking_policy: normalizeTrans(data.booking_policy),
-          status: data.status || 'draft',
+          title: normalize(data.title),
+          description: normalize(data.description),
+          important_info: normalize(data.important_info),
+          booking_policy: normalize(data.booking_policy),
           itineraries: (data.itineraries || []).map((it: any) => ({
             ...it,
-            title: normalizeTrans(it.title),
-            description: normalizeTrans(it.description)
+            title: normalize(it.title),
+            description: normalize(it.description)
           })),
           gallery: data.gallery || [],
           highlights: data.highlights || [],
@@ -169,12 +177,12 @@ export function useAdminTour(id?: string) {
           related_tour_ids: (data.related_tours || []).map((rt: any) => rt.related_tour_id)
         };
       } catch (err) {
-        console.error("Critical Admin Hook Error:", err);
+        console.error("Critical Fetch Error in useAdminTour:", err);
         throw err;
       }
     },
     enabled: !!id && id !== 'create',
-    retry: false
+    retry: 1
   });
 }
 
