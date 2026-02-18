@@ -35,6 +35,8 @@ export const TourEditor: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [meta, setMeta] = useState<{cats: any[], dests: any[], facts: any[], tours: any[]}>({cats: [], dests: [], facts: [], tours: []});
 
+  const isCreatePage = !id || id === 'create';
+
   useEffect(() => {
     const fetchMeta = async () => {
       if (!isConfigured) {
@@ -103,15 +105,15 @@ export const TourEditor: React.FC = () => {
 
   const onSubmit = async (data: any) => {
     try {
-      await mutation.mutateAsync({ ...data, id: id === 'create' ? 'create' : id });
+      await mutation.mutateAsync({ ...data, id: isCreatePage ? 'create' : id });
       navigate('/admin/tours');
     } catch (err: any) { alert(err.message); }
   };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
 
-  // Handle Error specifically
-  if (error || (!tour && id !== 'create')) {
+  // Corrected error check: show error only if query fails OR if we are on a specific ID route and the tour doesn't exist.
+  if (error || (!tour && !isCreatePage)) {
     const dbError = (error as any);
     return (
       <div className="h-screen flex flex-col items-center justify-center text-center p-8 bg-slate-50">
@@ -154,7 +156,7 @@ export const TourEditor: React.FC = () => {
         <div className="flex justify-between items-center mb-8 sticky top-0 bg-slate-50/90 backdrop-blur-md py-4 z-50">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200 rounded-lg"><X className="w-6 h-6 text-slate-400" /></button>
-            <h1 className="text-2xl font-black text-slate-900">{id === 'create' ? 'Assemble Expedition' : 'Refine Expedition'}</h1>
+            <h1 className="text-2xl font-black text-slate-900">{isCreatePage ? 'Assemble Expedition' : 'Refine Expedition'}</h1>
           </div>
           <button type="submit" disabled={mutation.isPending} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 shadow-xl shadow-emerald-100 disabled:opacity-50 transition-all">
             {mutation.isPending ? <Loader2 className="animate-spin" /> : <Save className="w-5 h-5" />} Save Product
