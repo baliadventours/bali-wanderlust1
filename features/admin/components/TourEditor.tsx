@@ -172,7 +172,7 @@ export const TourEditor: React.FC = () => {
     } catch (err: any) { alert(err.message); }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
+  if (isLoading) return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="text-center"><Loader2 className="animate-spin text-emerald-600 w-10 h-10 mx-auto mb-4" /><p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading Expedition Data...</p></div></div>;
 
   if (error || (!tour && !isCreatePage)) {
     return (

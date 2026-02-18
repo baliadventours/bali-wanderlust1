@@ -130,21 +130,20 @@ export function useAdminTour(id?: string) {
             reviews:tour_reviews(*),
             facts:tour_fact_values(*),
             pricing_packages:tour_pricing_packages(*),
-            related_tours:related_tours!related_tours_tour_id_fkey(related_tour_id)
+            related_tours:related_tours(related_tour_id)
           `)
           .eq('id', id)
           .maybeSingle();
 
         if (error) {
-          console.error("Supabase query error, attempting simple fetch:", error);
-          const { data: simpleData, error: simpleError } = await supabase
+          console.error("Supabase deep query failed, trying basic select:", error);
+          const { data: basicData, error: basicError } = await supabase
             .from('tours')
-            .select(`*`)
+            .select('*')
             .eq('id', id)
             .maybeSingle();
-            
-          if (simpleError || !simpleData) throw error || simpleError;
-          return { ...simpleData, title: simpleData.title || { en: '' }, description: simpleData.description || { en: '' } };
+          if (basicError || !basicData) throw error || basicError;
+          return { ...basicData, title: typeof basicData.title === 'string' ? { en: basicData.title } : (basicData.title || { en: '' }) };
         }
         
         if (!data) return null;
@@ -153,6 +152,8 @@ export function useAdminTour(id?: string) {
           ...data,
           title: typeof data.title === 'string' ? { en: data.title } : (data.title || { en: '' }),
           description: typeof data.description === 'string' ? { en: data.description } : (data.description || { en: '' }),
+          important_info: typeof data.important_info === 'string' ? { en: data.important_info } : (data.important_info || { en: '' }),
+          booking_policy: typeof data.booking_policy === 'string' ? { en: data.booking_policy } : (data.booking_policy || { en: '' }),
           status: data.status || 'draft',
           itineraries: data.itineraries || [],
           gallery: data.gallery || [],
@@ -168,12 +169,12 @@ export function useAdminTour(id?: string) {
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };
       } catch (err) {
-        console.error("Caught Admin Tour Error:", err);
+        console.error("Admin Tour Detail Error:", err);
         throw err;
       }
     },
     enabled: !!id && id !== 'create',
-    retry: false
+    retry: 1
   });
 }
 
