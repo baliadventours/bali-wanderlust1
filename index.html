@@ -12,14 +12,20 @@
           font-family: 'Plus Jakarta Sans', sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+          font-weight: 500;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Global Radius Overrides */
-        .rounded-3xl, .rounded-\[2\.5rem\], .rounded-2xl { border-radius: 10px !important; }
-        .rounded-xl { border-radius: 8px !important; }
-        .rounded-lg { border-radius: 6px !important; }
+        /* Global Radius Overrides to 10px */
+        .rounded-3xl, .rounded-\[2\.5rem\], .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 10px !important; }
+        .rounded-full { border-radius: 9999px !important; }
+        
+        /* Subtle emerald focus rings */
+        input:focus, select:focus, textarea:focus {
+          border-color: #10b981 !important;
+          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+        }
     </style>
     <script>
       tailwind.config = {

@@ -59,7 +59,6 @@ export function useAdminTour(id?: string) {
     queryFn: async () => {
       if (!id) return null;
       if (!isConfigured) {
-        // Mock data for preview mode
         return {
           id,
           title: { en: 'Grand Canyon Adventure' },

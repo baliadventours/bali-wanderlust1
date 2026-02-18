@@ -2,7 +2,7 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. ENUMS
+-- 1. ENUMS (Safe creation)
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
         CREATE TYPE user_role AS ENUM ('admin', 'editor', 'customer');
@@ -93,16 +93,30 @@ CREATE TABLE IF NOT EXISTS tour_availability (
   status TEXT DEFAULT 'active'
 );
 
-CREATE TABLE IF NOT EXISTS reviews (
+CREATE TABLE IF NOT EXISTS inquiries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tour_id UUID REFERENCES tours(id) ON DELETE CASCADE,
-  customer_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  rating INT CHECK (rating >= 1 AND rating <= 5),
-  comment TEXT,
+  customer_id UUID REFERENCES profiles(id),
+  tour_id UUID REFERENCES tours(id),
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'open',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- SEED DATA
+-- 3. HELPER FUNCTIONS
+-- Use this to promote your user to admin: SELECT promote_to_admin('your-email@example.com');
+CREATE OR REPLACE FUNCTION promote_to_admin(target_email TEXT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE profiles 
+  SET role = 'admin' 
+  WHERE id IN (
+    SELECT id FROM auth.users WHERE email = target_email
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 4. SEED CONTENT (Example Bali Rafting)
 INSERT INTO destinations (slug, name) VALUES ('bali', '{"en": "Bali", "es": "Bali"}') ON CONFLICT DO NOTHING;
 INSERT INTO tour_categories (slug, name) VALUES ('adventure', '{"en": "Adventure"}') ON CONFLICT DO NOTHING;
 INSERT INTO tour_types (slug, name) VALUES ('rafting', '{"en": "Rafting"}') ON CONFLICT DO NOTHING;
@@ -114,24 +128,22 @@ DECLARE
     t_raf UUID := (SELECT id FROM tour_types WHERE slug = 'rafting');
     new_tour_id UUID;
 BEGIN
-    -- Seeding White Water Rafting Ubud
     INSERT INTO tours (slug, destination_id, category_id, tour_type_id, title, description, base_price_usd, duration_minutes, max_participants, difficulty, images, is_published, avg_rating, review_count, highlights, inclusions, exclusions)
     VALUES (
       'ayung-rafting', d_bali, c_adv, t_raf, 
       '{"en": "White Water Rafting Ubud"}', 
-      '{"en": "This white-water rafting adventure takes you on an exciting trip down Balis Ayung River. This activity comes with a tasty lunch and all the safety gear you need."}', 
+      '{"en": "This white-water rafting adventure takes you on an exciting trip down Balis Ayung River. Experience the thrill of navigating rapids through lush jungle landscapes."}', 
       50, 300, 20, 'intermediate', 
-      '{"https://images.unsplash.com/photo-1530122622335-d40394391ea5", "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957", "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2", "https://images.unsplash.com/photo-1537996194471-e657df975ab4"}',
+      '{"https://images.unsplash.com/photo-1530122622335-d40394391ea5?auto=format&fit=crop&q=80&w=1200", "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800"}',
       true, 4.8, 109,
-      '{"Have a safe time rafting with the help of a trained guide.", "Take advantage of the free lunch spread.", "Get round-trip transfers from your Ubud hotel."}',
-      '{"Safety-approved Rafting equipment", "Professional River Guide", "Meal (Lunch Box)", "Insurance Coverage"}',
-      '{"Souvenir photos", "Soft Drink"}'
+      '{"Safety briefing & expert guides", "Buffet lunch overlooking the valley", "Hotel pickup and drop-off included"}',
+      '{"Rafting equipment", "River guide", "Buffet lunch", "Locker & Shower"}',
+      '{"Souvenir photos", "Personal expenses"}'
     ) RETURNING id INTO new_tour_id;
 
     INSERT INTO tour_itineraries (tour_id, day_number, title, description)
-    VALUES 
-    (new_tour_id, 1, '{"en": "Bali Bintang Rafting"}', '{"en": "Experience the thrill of Bali Bintang Rafting in Ubud! Navigate a 14km stretch of the Ayung River with 28 exciting class II-III rapids."}');
+    VALUES (new_tour_id, 1, '{"en": "Arrival & Prep"}', '{"en": "Check-in at the base camp and get fitted with safety gear."}');
 
     INSERT INTO tour_availability (tour_id, start_time, end_time, available_spots, total_spots)
-    VALUES (new_tour_id, '2025-02-19 09:00:00+00', '2025-02-19 14:00:00+00', 12, 20);
+    VALUES (new_tour_id, NOW() + INTERVAL '7 days', NOW() + INTERVAL '7 days 5 hours', 15, 20);
 END $$;

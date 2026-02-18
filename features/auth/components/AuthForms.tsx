@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
-import { Loader2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { supabase, isConfigured } from '../../../lib/supabase';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Loader2, Mail, Lock, User, ShieldCheck, Info } from 'lucide-react';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setAuth } = useAuthStore();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,7 +21,30 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // In Preview Mode, we simulate login with specific credentials
+    if (!isConfigured) {
+      setTimeout(() => {
+        if (email === 'admin@toursphere.com' && password === 'password123') {
+          setAuth(
+            { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+            { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+          );
+          navigate('/admin');
+        } else if (email === 'customer@example.com' && password === 'password123') {
+          setAuth(
+            { id: 'demo-user', email: 'customer@example.com' } as any,
+            { id: 'demo-user', full_name: 'John Traveler', role: 'customer' }
+          );
+          navigate('/dashboard');
+        } else {
+          setError('Invalid credentials for demo mode. Use admin@toursphere.com / password123');
+        }
+        setLoading(false);
+      }, 800);
+      return;
+    }
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
       setError(error.message);
@@ -29,35 +54,45 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  const handleDemoAdmin = () => {
+    setAuth(
+      { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+      { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+    );
+    navigate('/admin');
+  };
+
   return (
-    <div className="max-w-md w-full mx-auto p-8 bg-white rounded-3xl border border-slate-200 shadow-xl">
-      <h2 className="text-3xl font-black text-slate-900 mb-2">Welcome Back</h2>
-      <p className="text-slate-500 mb-8 font-medium">Log in to manage your expeditions.</p>
+    <div className="max-w-md w-full mx-auto p-10 bg-white rounded-[10px] border border-slate-200 shadow-2xl">
+      <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+      <p className="text-slate-500 mb-10 text-sm font-medium">Log in to manage your expeditions.</p>
       
       <form onSubmit={handleLogin} className="space-y-6">
-        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-sm font-bold">{error}</div>}
+        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-[10px] text-xs font-bold border border-rose-100">{error}</div>}
         
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="w-3 h-3" /> Email Address
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5" /> Email Address
           </label>
           <input 
             type="email" 
             required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="admin@toursphere.com"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Lock className="w-3 h-3" /> Password
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5" /> Password
           </label>
           <input 
             type="password" 
             required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="••••••••"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -65,14 +100,34 @@ export const LoginForm: React.FC = () => {
 
         <button 
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all"
+          className="w-full bg-slate-900 text-white py-4 rounded-[10px] font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
         </button>
       </form>
+
+      {!isConfigured && (
+        <div className="mt-8 space-y-4 pt-8 border-t border-slate-100">
+          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
+            <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
+            <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
+              <p className="mb-1">Demo Access Available:</p>
+              <p>Email: admin@toursphere.com</p>
+              <p>Pass: password123</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleDemoAdmin}
+            className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Quick Admin Login
+          </button>
+        </div>
+      )}
       
-      <p className="mt-8 text-center text-sm text-slate-500 font-medium">
-        Don't have an account? <Link to="/register" className="text-indigo-600 font-bold hover:underline">Join the club</Link>
+      <p className="mt-8 text-center text-xs text-slate-400 font-bold">
+        Don't have an account? <Link to="/register" className="text-emerald-600 hover:text-emerald-700 transition-colors">Join the club</Link>
       </p>
     </div>
   );
@@ -107,47 +162,50 @@ export const RegisterForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto p-8 bg-white rounded-3xl border border-slate-200 shadow-xl">
-      <h2 className="text-3xl font-black text-slate-900 mb-2">Create Account</h2>
-      <p className="text-slate-500 mb-8 font-medium">Start your journey with TourSphere today.</p>
+    <div className="max-w-md w-full mx-auto p-10 bg-white rounded-[10px] border border-slate-200 shadow-2xl">
+      <h2 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h2>
+      <p className="text-slate-500 mb-10 text-sm font-medium">Start your journey with TourSphere today.</p>
       
       <form onSubmit={handleRegister} className="space-y-6">
-        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-sm font-bold">{error}</div>}
+        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-[10px] text-xs font-bold border border-rose-100">{error}</div>}
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <User className="w-3 h-3" /> Full Name
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <User className="w-3.5 h-3.5" /> Full Name
           </label>
           <input 
             type="text" 
             required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="John Doe"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
         </div>
         
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="w-3 h-3" /> Email Address
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5" /> Email Address
           </label>
           <input 
             type="email" 
             required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="john@example.com"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Lock className="w-3 h-3" /> Password
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5" /> Password
           </label>
           <input 
             type="password" 
             required
-            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="••••••••"
+            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -155,14 +213,14 @@ export const RegisterForm: React.FC = () => {
 
         <button 
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all"
+          className="w-full bg-emerald-600 text-white py-4 rounded-[10px] font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
         </button>
       </form>
       
-      <p className="mt-8 text-center text-sm text-slate-500 font-medium">
-        Already registered? <Link to="/login" className="text-indigo-600 font-bold hover:underline">Log in here</Link>
+      <p className="mt-8 text-center text-xs text-slate-400 font-bold">
+        Already registered? <Link to="/login" className="text-emerald-600 hover:text-emerald-700 transition-colors">Log in here</Link>
       </p>
     </div>
   );
