@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useTourDetail } from '../hooks/useTourDetail';
 import { BookingWidget } from './BookingWidget';
+import { InquirySection } from '../../inquiries/components/InquirySection';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../../store/useAppStore';
@@ -17,7 +18,6 @@ export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: tour, isLoading, error } = useTourDetail(slug || '');
   const [activeTab, setActiveTab] = useState<'itinerary' | 'reviews' | 'faq'>('itinerary');
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const { t } = useTranslation();
   const { language } = useAppStore();
 
@@ -96,7 +96,6 @@ export const TourDetailPage: React.FC = () => {
             alt={title} 
             className="w-full h-full object-cover" 
             loading="eager"
-            // Fix: Changed fetchpriority to fetchPriority for correct React/TS typing
             fetchPriority="high"
           />
         </div>
@@ -110,6 +109,11 @@ export const TourDetailPage: React.FC = () => {
               <p className="text-slate-600 leading-relaxed text-lg mb-8">
                 {description}
               </p>
+              
+              {/* Inquiry Section placed below description */}
+              <div className="mt-12">
+                <InquirySection tourId={tour.id} />
+              </div>
             </section>
 
             <section>
@@ -124,15 +128,19 @@ export const TourDetailPage: React.FC = () => {
 
               {activeTab === 'itinerary' && (
                 <div className="space-y-8">
-                  {tour.itineraries?.map((day) => (
-                    <div key={day.id} className="relative pl-12">
-                      <div className="absolute left-0 top-0 w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
-                        {day.day_number}
+                  {tour.itineraries && tour.itineraries.length > 0 ? (
+                    tour.itineraries.map((day) => (
+                      <div key={day.id} className="relative pl-12">
+                        <div className="absolute left-0 top-0 w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                          {day.day_number}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">{getTranslation(day.title, language)}</h3>
+                        <p className="text-slate-600 leading-relaxed mb-4">{getTranslation(day.description, language)}</p>
                       </div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{getTranslation(day.title, language)}</h3>
-                      <p className="text-slate-600 leading-relaxed mb-4">{getTranslation(day.description, language)}</p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-slate-400 italic">No itinerary details available for this tour yet.</p>
+                  )}
                 </div>
               )}
             </section>

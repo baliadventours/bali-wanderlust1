@@ -1,13 +1,15 @@
+
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './providers/AuthProvider';
 import { PublicLayout, DashboardLayout } from './components/layout/Layouts';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Loader2, ArrowRight, Star, MapPin, Compass } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { useTours } from './features/tours/hooks/useTours';
 import { useBlog } from './features/blog/hooks/useBlog';
 import { TourCard } from './features/tours/components/TourCard';
+import { LoginForm, RegisterForm } from './features/auth/components/AuthForms';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +27,7 @@ const TourDetailPage = lazy(() => import('./features/tours/components/TourDetail
 const BlogListingPage = lazy(() => import('./features/blog/components/BlogListingPage').then(m => ({ default: m.BlogListingPage })));
 const CheckoutPage = lazy(() => import('./features/booking/components/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const BookingSuccessPage = lazy(() => import('./features/booking/components/BookingSuccessPage').then(m => ({ default: m.BookingSuccessPage })));
+const MyBookings = lazy(() => import('./features/customer/components/MyBookings').then(m => ({ default: m.MyBookings })));
 
 // Lazy Loaded Admin
 const AdminOverview = lazy(() => import('./features/admin/components/AdminOverview').then(m => ({ default: m.AdminOverview })));
@@ -143,8 +146,8 @@ const App: React.FC = () => {
                 <Route path="/tours" element={<TourListingPage />} />
                 <Route path="/tours/:slug" element={<TourDetailPage />} />
                 <Route path="/blog" element={<BlogListingPage />} />
-                <Route path="/login" element={<div className="p-20 text-center">Login Page Placeholder</div>} />
-                <Route path="/register" element={<div className="p-20 text-center">Registration Page Placeholder</div>} />
+                <Route path="/login" element={<div className="py-20 px-4 flex justify-center"><LoginForm /></div>} />
+                <Route path="/register" element={<div className="py-20 px-4 flex justify-center"><RegisterForm /></div>} />
                 <Route path="/booking/success" element={<BookingSuccessPage />} />
               </Route>
 
@@ -156,7 +159,7 @@ const App: React.FC = () => {
                 
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<AdminOverview />} />
-                  <Route path="/dashboard/bookings" element={<div className="p-8">My Bookings List (Customer View)</div>} />
+                  <Route path="/dashboard/bookings" element={<MyBookings />} />
                 </Route>
               </Route>
 

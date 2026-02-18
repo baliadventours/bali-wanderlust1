@@ -65,10 +65,11 @@ export function useTourDetail(slug: string) {
           category:tour_categories(name),
           destination:destinations(name),
           tour_type:tour_types(name),
-          itineraries(*),
+          itineraries:tour_itineraries(*),
           availability:tour_availability(*),
           seasonal_rules:seasonal_pricing_rules(*),
-          reviews(*, profiles(full_name, avatar_url))
+          addons:tour_addons(*),
+          reviews:reviews(*, profiles(full_name, avatar_url))
         `)
         .eq('slug', slug)
         .single();
