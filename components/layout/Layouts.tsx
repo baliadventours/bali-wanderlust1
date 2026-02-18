@@ -4,10 +4,13 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
+import { LocalePicker } from '../shared/LocalePicker';
+import { useTranslation } from 'react-i18next';
 
 export const PublicLayout: React.FC = () => {
-  const { user, profile } = useAuthStore();
+  const { user } = useAuthStore();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,16 +23,17 @@ export const PublicLayout: React.FC = () => {
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/tours" className="text-slate-600 hover:text-indigo-600 font-medium">Explore Tours</Link>
+              <Link to="/tours" className="text-slate-600 hover:text-indigo-600 font-medium">{t('common.explore')}</Link>
+              <LocalePicker />
               {user ? (
                 <Link to="/dashboard" className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">
-                  Dashboard
+                  {t('common.dashboard')}
                 </Link>
               ) : (
                 <div className="flex items-center gap-4">
-                  <Link to="/login" className="text-slate-600 hover:text-indigo-600 font-medium">Login</Link>
+                  <Link to="/login" className="text-slate-600 hover:text-indigo-600 font-medium">{t('common.login')}</Link>
                   <Link to="/register" className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">
-                    Sign Up
+                    {t('common.signup')}
                   </Link>
                 </div>
               )}
@@ -55,6 +59,7 @@ export const PublicLayout: React.FC = () => {
 
 export const DashboardLayout: React.FC = () => {
   const { profile, signOut } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -90,6 +95,9 @@ export const DashboardLayout: React.FC = () => {
           ))}
         </nav>
         <div className="p-4 border-t border-slate-200">
+          <div className="mb-4 px-3">
+             <LocalePicker />
+          </div>
           <div className="flex items-center gap-3 mb-4 px-3">
             <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
               {profile?.full_name?.charAt(0) || 'U'}
@@ -101,7 +109,7 @@ export const DashboardLayout: React.FC = () => {
           </div>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm">
             <LogOut className="w-4 h-4" />
-            Sign Out
+            {t('common.logout')}
           </button>
         </div>
       </aside>
