@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users } from 'lucide-react';
+import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { LocalePicker } from '../shared/LocalePicker';
@@ -122,13 +122,16 @@ export const DashboardLayout: React.FC = () => {
   const menuItems = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['customer', 'admin', 'editor'] },
     { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, roles: ['customer'] },
-    { label: 'Manage Tours', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
-    { label: 'Orders', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
-    { label: 'User Management', path: '/admin/users', icon: Users, roles: ['admin'] },
+    { type: 'divider', roles: ['admin', 'editor'] },
+    { label: 'Tour Inventory', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
+    { label: 'Categories', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
+    { label: 'Destinations', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
+    { label: 'Booking Orders', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
+    { label: 'Staff & Users', path: '/admin/users', icon: Users, roles: ['admin'] },
     { label: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['customer', 'admin', 'editor'] },
   ];
 
-  const filteredMenu = menuItems.filter(item => profile && item.roles.includes(profile.role));
+  const filteredMenu = menuItems.filter(item => profile && (item.roles ? item.roles.includes(profile.role) : true));
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -142,12 +145,15 @@ export const DashboardLayout: React.FC = () => {
           </Link>
         </div>
         <nav className="flex-grow px-4 space-y-1">
-          {filteredMenu.map((item) => (
-            <Link key={item.path} to={item.path} className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-[10px] transition font-bold text-xs">
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
+          {filteredMenu.map((item, idx) => {
+            if (item.type === 'divider') return <div key={idx} className="h-px bg-slate-100 my-4" />;
+            return (
+              <Link key={item.path} to={item.path!} className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-[10px] transition font-bold text-xs">
+                {item.icon && <item.icon className="w-4 h-4" />}
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="p-4 border-t border-slate-50">
           <div className="mb-4 px-2">
