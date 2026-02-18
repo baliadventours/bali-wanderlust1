@@ -112,7 +112,7 @@ export function useAdminTour(id?: string) {
           faqs: [{ question: 'Is gear provided?', answer: 'Yes, full gear is included.' }],
           reviews: [{ reviewer_name: 'Adventure Seekers', rating: 5, comment: 'Simply breathtaking.' }],
           facts: [{ fact_id: 'f-dur', value: '8 Hours' }],
-          pricing_packages: [{ package_name: 'Standard', base_price: 45, min_people: 1, max_people: 10 }],
+          pricing_packages: [{ package_name: 'Standard', base_price: 45, min_people: 1, max_people: 10, price_tiers: [] }],
           related_tour_ids: []
         };
       }
@@ -129,6 +129,7 @@ export function useAdminTour(id?: string) {
             faqs:tour_faq(*),
             reviews:tour_reviews(*),
             facts:tour_fact_values(*),
+            pricing_packages:tour_pricing_packages(*),
             related_tours:related_tours!related_tours_tour_id_fkey(related_tour_id)
           `)
           .eq('id', id)
@@ -153,7 +154,10 @@ export function useAdminTour(id?: string) {
           faqs: data.faqs || [],
           reviews: data.reviews || [],
           facts: data.facts || [],
-          pricing_packages: data.pricing_packages || [],
+          pricing_packages: data.pricing_packages?.map((p: any) => ({
+            ...p,
+            price_tiers: p.price_tiers || []
+          })) || [],
           related_tour_ids: data.related_tours?.map((rt: any) => rt.related_tour_id) || []
         };
       } catch (err) {
