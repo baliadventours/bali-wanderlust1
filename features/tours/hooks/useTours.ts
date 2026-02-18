@@ -10,65 +10,194 @@ export function useTours(filters: TourFilters) {
     queryFn: async () => {
       if (!isConfigured) {
         await new Promise(r => setTimeout(r, 800));
-        const dummyTours: Tour[] = [
+        
+        // Define 20 Bali specific tours for the preview
+        const baliTours: Tour[] = [
           {
-            id: 'd1', slug: 'northern-lights-expedition',
-            title: { en: 'Arctic Northern Lights Expedition', es: 'Expedición Ártica de Luces del Norte' },
-            description: { en: 'Experience the magic of the Aurora Borealis in the Icelandic wilderness.' },
-            base_price_usd: 1250, duration_minutes: 4320, max_participants: 12, difficulty: 'intermediate',
-            images: ['https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c1', destination_id: 'des1', tour_type_id: 't1',
-            avg_rating: 4.9, review_count: 56, destination: { name: { en: 'Iceland', es: 'Islandia' } }
+            id: 'b1', slug: 'ubud-jungle-highlights',
+            title: { en: 'Ubud Jungle & Sacred Monkey Forest', es: 'Selva de Ubud y Bosque de Monos' },
+            description: { en: 'Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace.' },
+            base_price_usd: 45, duration_minutes: 480, max_participants: 10, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
+            avg_rating: 4.9, review_count: 1205, destination: { name: { en: 'Bali' } }
           },
           {
-            id: 'd2', slug: 'tokyo-food-odyssey',
-            title: { en: 'Tokyo Midnight Food Odyssey', es: 'Odisea Gastronómica de Medianoche en Tokio' },
-            description: { en: 'Eat like a local at hidden gems across Shinjuku and Shibuya.' },
-            base_price_usd: 185, duration_minutes: 240, max_participants: 8, difficulty: 'beginner',
-            images: ['https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c2', destination_id: 'des2', tour_type_id: 't2',
-            avg_rating: 4.8, review_count: 124, destination: { name: { en: 'Japan', es: 'Japón' } }
+            id: 'b2', slug: 'mt-batur-sunrise',
+            title: { en: 'Mount Batur Active Volcano Sunrise Trek', es: 'Caminata al Amanecer Monte Batur' },
+            description: { en: 'Hike to the summit of an active volcano and watch the sunrise.' },
+            base_price_usd: 65, duration_minutes: 600, max_participants: 15, difficulty: 'intermediate',
+            images: ['https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
+            avg_rating: 4.8, review_count: 850, destination: { name: { en: 'Bali' } }
           },
           {
-            id: 'd3', slug: 'amalfi-sailing-week',
-            title: { en: 'Amalfi Coast Sailing Week', es: 'Semana de Navegación por la Costa Amalfitana' },
-            description: { en: 'Luxury sailing adventure along the most beautiful coastline in the world.' },
-            base_price_usd: 3200, duration_minutes: 10080, max_participants: 6, difficulty: 'beginner',
-            images: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c3', destination_id: 'des3', tour_type_id: 't3',
-            avg_rating: 5.0, review_count: 32, destination: { name: { en: 'Italy', es: 'Italia' } }
+            id: 'b3', slug: 'nusa-penida-best',
+            title: { en: 'Nusa Penida: Kelingking & Crystal Bay', es: 'Nusa Penida: Lo Mejor' },
+            description: { en: 'The ultimate day trip to the most famous coastline in the world.' },
+            base_price_usd: 85, duration_minutes: 720, max_participants: 8, difficulty: 'intermediate',
+            images: ['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-pho',
+            avg_rating: 4.9, review_count: 2100, destination: { name: { en: 'Bali' } }
           },
           {
-            id: 'd4', slug: 'inca-trail-trek',
-            title: { en: 'Inca Trail to Machu Picchu', es: 'Camino Inca a Machu Picchu' },
-            description: { en: 'The legendary trek through the Andes mountains.' },
-            base_price_usd: 750, duration_minutes: 5760, max_participants: 15, difficulty: 'advanced',
-            images: ['https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c1', destination_id: 'des4', tour_type_id: 't1',
-            avg_rating: 5.0, review_count: 89, destination: { name: { en: 'Peru', es: 'Perú' } }
+            id: 'b4', slug: 'uluwatu-kecak',
+            title: { en: 'Uluwatu Temple Sunset & Fire Dance', es: 'Uluwatu y Danza de Fuego' },
+            description: { en: 'A dramatic performance on a cliff edge overlooking the Indian Ocean.' },
+            base_price_usd: 35, duration_minutes: 300, max_participants: 20, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1558005530-d7c4ec1630aa?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-spi',
+            avg_rating: 4.7, review_count: 540, destination: { name: { en: 'Bali' } }
           },
           {
-            id: 'd5', slug: 'kyoto-zen-retreat',
-            title: { en: 'Kyoto Zen & Forest Bathing', es: 'Retiro Zen y Baño de Bosque en Kioto' },
-            description: { en: 'A peaceful journey through Arashiyama bamboo groves.' },
-            base_price_usd: 220, duration_minutes: 360, max_participants: 10, difficulty: 'beginner',
-            images: ['https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c2', destination_id: 'des2', tour_type_id: 't4',
-            avg_rating: 4.7, review_count: 42, destination: { name: { en: 'Japan', es: 'Japón' } }
+            id: 'b5', slug: 'gate-of-heaven',
+            title: { en: 'Lempuyang Temple: Gate of Heaven', es: 'Templo Lempuyang' },
+            description: { en: 'Get the iconic photo between the Hindu gates.' },
+            base_price_usd: 55, duration_minutes: 600, max_participants: 10, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1537953391648-762d01df3c14?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
+            avg_rating: 4.5, review_count: 980, destination: { name: { en: 'Bali' } }
           },
           {
-            id: 'd6', slug: 'blue-lagoon-vip',
-            title: { en: 'Ultimate Blue Lagoon Luxury', es: 'Lujo Definitivo en el Blue Lagoon' },
-            description: { en: 'Private lounge and exclusive access to volcanic waters.' },
-            base_price_usd: 450, duration_minutes: 180, max_participants: 4, difficulty: 'beginner',
-            images: ['https://images.unsplash.com/photo-1476610182048-b716b8518aae?auto=format&fit=crop&q=80&w=800'],
-            is_published: true, category_id: 'c3', destination_id: 'des1', tour_type_id: 't4',
-            avg_rating: 4.9, review_count: 215, destination: { name: { en: 'Iceland', es: 'Islandia' } }
+            id: 'b6', slug: 'ayung-rafting',
+            title: { en: 'Ayung River White Water Rafting', es: 'Rafting en el Río Ayung' },
+            description: { en: 'Paddle through wild rapids and past hidden waterfalls.' },
+            base_price_usd: 50, duration_minutes: 240, max_participants: 30, difficulty: 'intermediate',
+            images: ['https://images.unsplash.com/photo-1530122622335-d40394391ea5?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
+            avg_rating: 4.6, review_count: 1100, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b7', slug: 'tirta-empul-blessing',
+            title: { en: 'Spiritual Holy Water Temple Blessing', es: 'Bendición Espiritual' },
+            description: { en: 'Participate in a traditional purification ritual.' },
+            base_price_usd: 40, duration_minutes: 360, max_participants: 6, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-spi',
+            avg_rating: 4.9, review_count: 320, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b8', slug: 'tanah-lot-sunset',
+            title: { en: 'Tanah Lot Temple Sunset Expedition', es: 'Atardecer en Tanah Lot' },
+            description: { en: 'Visit the temple on the sea, one of Bali\'s icons.' },
+            base_price_usd: 30, duration_minutes: 300, max_participants: 15, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-pho',
+            avg_rating: 4.7, review_count: 720, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b9', slug: 'lovina-dolphins',
+            title: { en: 'Lovina Dolphin Watching & Snorkeling', es: 'Delfines en Lovina' },
+            description: { en: 'A sunrise boat trip to see wild dolphins.' },
+            base_price_usd: 45, duration_minutes: 480, max_participants: 12, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1544928147-79a2dbc1f389?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
+            avg_rating: 4.4, review_count: 430, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b10', slug: 'cave-dinner',
+            title: { en: 'Luxury Romantic Dinner in a Cave', es: 'Cena Romántica en Cueva' },
+            description: { en: 'An exclusive candlelight dinner inside a natural cave.' },
+            base_price_usd: 450, duration_minutes: 180, max_participants: 2, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-spi',
+            avg_rating: 5.0, review_count: 15, destination: { name: { en: 'Bali' } }
+          },
+          // Adding 10 more to reach 20...
+          {
+            id: 'b11', slug: 'breakfast-orangutan',
+            title: { en: 'Breakfast with Orangutans', es: 'Desayuno con Orangutanes' },
+            description: { en: 'Start your day with the kings of the jungle.' },
+            base_price_usd: 75, duration_minutes: 180, max_participants: 20, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1540206351-d6465b3ac5c1?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
+            avg_rating: 4.8, review_count: 210, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b12', slug: 'canggu-surf',
+            title: { en: 'Canggu Surf Private Lesson', es: 'Clase de Surf en Canggu' },
+            description: { en: 'Master the waves of the Indian Ocean.' },
+            base_price_usd: 40, duration_minutes: 120, max_participants: 4, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
+            avg_rating: 4.9, review_count: 89, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b13', slug: 'sekumpul-trek',
+            title: { en: 'Sekumpul Waterfall Trekking', es: 'Trekking Sekumpul' },
+            description: { en: 'Visit Bali\'s tallest and most majestic waterfall.' },
+            base_price_usd: 60, duration_minutes: 480, max_participants: 8, difficulty: 'advanced',
+            images: ['https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
+            avg_rating: 4.9, review_count: 156, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b14', slug: 'seminyak-food',
+            title: { en: 'Seminyak Night Market Tour', es: 'Tour Gastronómico Seminyak' },
+            description: { en: 'Eat like a local in the heart of Seminyak.' },
+            base_price_usd: 35, duration_minutes: 180, max_participants: 12, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
+            avg_rating: 4.7, review_count: 67, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b15', slug: 'sidemen-valley',
+            title: { en: 'Sidemen Valley Traditional Trek', es: 'Caminata Sidemen' },
+            description: { en: 'Walk through the untouched rice terraces of East Bali.' },
+            base_price_usd: 40, duration_minutes: 300, max_participants: 10, difficulty: 'intermediate',
+            images: ['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-wel', destination_id: 'bali', tour_type_id: 't-hik',
+            avg_rating: 4.9, review_count: 34, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b16', slug: 'balinese-cooking',
+            title: { en: 'Ubud Traditional Cooking Class', es: 'Clase de Cocina Ubud' },
+            description: { en: 'Learn the secrets of Balinese spices.' },
+            base_price_usd: 45, duration_minutes: 240, max_participants: 15, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-cul', destination_id: 'bali', tour_type_id: 't-foo',
+            avg_rating: 5.0, review_count: 128, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b17', slug: 'atv-adventure',
+            title: { en: 'Bali ATV Quad Bike Adventure', es: 'Aventura en ATV' },
+            description: { en: 'Ride through jungles, tunnels, and mud.' },
+            base_price_usd: 55, duration_minutes: 180, max_participants: 20, difficulty: 'intermediate',
+            images: ['https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
+            avg_rating: 4.6, review_count: 88, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b18', slug: 'jatiluwih-cycling',
+            title: { en: 'Jatiluwih UNESCO Rice Terrace Cycling', es: 'Ciclismo en Jatiluwih' },
+            description: { en: 'E-bike tour through spectacular scenery.' },
+            base_price_usd: 65, duration_minutes: 240, max_participants: 10, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1444464666168-49d633b867ad?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-hik',
+            avg_rating: 4.9, review_count: 56, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b19', slug: 'menjangan-snorkel',
+            title: { en: 'Menjangan Island Snorkeling', es: 'Snorkel en Menjangan' },
+            description: { en: 'Discover the best marine life in Bali.' },
+            base_price_usd: 95, duration_minutes: 600, max_participants: 8, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1544551763-47a15950c57f?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-adv', destination_id: 'bali', tour_type_id: 't-wat',
+            avg_rating: 4.8, review_count: 22, destination: { name: { en: 'Bali' } }
+          },
+          {
+            id: 'b20', slug: 'heli-tour',
+            title: { en: 'Bali Helicopter Coastline Flight', es: 'Helicóptero por Bali' },
+            description: { en: 'Breathtaking aerial views of Uluwatu and Tanah Lot.' },
+            base_price_usd: 550, duration_minutes: 20, max_participants: 4, difficulty: 'beginner',
+            images: ['https://images.unsplash.com/photo-1464037862834-ee5772642398?auto=format&fit=crop&q=80&w=800'],
+            is_published: true, category_id: 'cat-lux', destination_id: 'bali', tour_type_id: 't-pho',
+            avg_rating: 5.0, review_count: 8, destination: { name: { en: 'Bali' } }
           }
         ];
         
         // Filter logic for preview mode
-        let filtered = [...dummyTours];
+        let filtered = [...baliTours];
         if (filters.keyword) {
           const kw = filters.keyword.toLowerCase();
           filtered = filtered.filter(t => 
@@ -114,16 +243,19 @@ export function useTourMetaData() {
     queryFn: async () => {
       if (!isConfigured) return { 
         destinations: [
-          {id: 'des1', name: {en: 'Iceland', es: 'Islandia'}},
-          {id: 'des2', name: {en: 'Japan', es: 'Japón'}},
-          {id: 'des3', name: {en: 'Italy', es: 'Italia'}},
-          {id: 'des4', name: {en: 'Peru', es: 'Perú'}}
+          {id: 'bali', name: {en: 'Bali', es: 'Bali'}},
+          {id: 'iceland', name: {en: 'Iceland', es: 'Islandia'}},
+          {id: 'japan', name: {en: 'Japan', es: 'Japón'}},
+          {id: 'italy', name: {en: 'Italy', es: 'Italia'}},
+          {id: 'peru', name: {en: 'Peru', es: 'Perú'}}
         ], 
         tourTypes: [
-          {id: 't1', name: {en: 'Hiking', es: 'Senderismo'}},
-          {id: 't2', name: {en: 'Foodie', es: 'Gastronomía'}},
-          {id: 't3', name: {en: 'Sailing', es: 'Navegación'}},
-          {id: 't4', name: {en: 'Wellness', es: 'Bienestar'}}
+          {id: 't-hik', name: {en: 'Hiking', es: 'Senderismo'}},
+          {id: 't-wat', name: {en: 'Water Sports', es: 'Deportes Acuáticos'}},
+          {id: 't-foo', name: {en: 'Foodie', es: 'Gastronomía'}},
+          {id: 't-pho', name: {en: 'Photography', es: 'Fotografía'}},
+          {id: 't-spi', name: {en: 'Spiritual', es: 'Espiritual'}},
+          {id: 't-wel', name: {en: 'Wellness', es: 'Bienestar'}}
         ] 
       };
       
