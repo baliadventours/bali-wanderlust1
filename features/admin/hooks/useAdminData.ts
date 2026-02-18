@@ -129,7 +129,7 @@ export function useAdminTour(id?: string) {
             faqs:tour_faq(*),
             reviews:tour_reviews(*),
             facts:tour_fact_values(*),
-            related_tours:related_tours(related_tour_id)
+            related_tours:related_tours!related_tours_tour_id_fkey(related_tour_id)
           `)
           .eq('id', id)
           .maybeSingle();

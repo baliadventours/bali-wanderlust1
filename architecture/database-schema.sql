@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- REPAIR STATUS COLUMN (If table existed before enum/column was added)
+-- REPAIR STATUS COLUMN
 DO $$ 
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tours' AND column_name='status') THEN
@@ -137,15 +137,65 @@ CREATE TABLE IF NOT EXISTS public.tour_reviews (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.related_tours (
+-- 7. AVAILABILITY & ADDONS
+CREATE TABLE IF NOT EXISTS public.tour_availability (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
-    related_tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
-    PRIMARY KEY (tour_id, related_tour_id)
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ,
+    available_spots INT NOT NULL,
+    total_spots INT NOT NULL,
+    price_override_usd DECIMAL(12,2),
+    status TEXT DEFAULT 'active',
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. SECURITY (RLS)
+CREATE TABLE IF NOT EXISTS public.tour_addons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
+    title JSONB NOT NULL DEFAULT '{"en": ""}',
+    description JSONB DEFAULT '{"en": ""}',
+    unit_price_usd DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. BOOKINGS & DISCOUNTS
+CREATE TABLE IF NOT EXISTS public.discount_codes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code TEXT UNIQUE NOT NULL,
+    discount_type TEXT NOT NULL, -- 'percentage' or 'fixed'
+    value DECIMAL(12,2) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.bookings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    customer_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    availability_id UUID REFERENCES public.tour_availability(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending',
+    total_amount_usd DECIMAL(12,2) NOT NULL,
+    currency_code TEXT DEFAULT 'USD',
+    currency_amount DECIMAL(12,2),
+    stripe_payment_intent_id TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. AMBIGUOUS RELATIONSHIP FIX (Explicit Naming)
+CREATE TABLE IF NOT EXISTS public.related_tours (
+    tour_id UUID NOT NULL,
+    related_tour_id UUID NOT NULL,
+    PRIMARY KEY (tour_id, related_tour_id),
+    CONSTRAINT related_tours_tour_id_fkey FOREIGN KEY (tour_id) REFERENCES public.tours(id) ON DELETE CASCADE,
+    CONSTRAINT related_tours_related_tour_id_fkey FOREIGN KEY (related_tour_id) REFERENCES public.tours(id) ON DELETE CASCADE
+);
+
+-- 10. SECURITY (RLS)
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tour_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public Read Tours" ON public.tours;
 CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (TRUE);
@@ -161,7 +211,7 @@ CREATE POLICY "Public Profiles Read" ON public.profiles FOR SELECT USING (TRUE);
 DROP POLICY IF EXISTS "Users Update Own Profile" ON public.profiles;
 CREATE POLICY "Users Update Own Profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
--- 8. AUTH TRIGGER HANDLER
+-- 11. AUTH TRIGGER HANDLER
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
