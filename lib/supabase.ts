@@ -26,7 +26,7 @@ export const isConfigured =
 if (!isConfigured) {
   console.warn(
     "Supabase configuration is missing or incomplete. " +
-    "The app is running in 'Preview Mode' with demo credentials: admin@toursphere.com / password123"
+    "The app is running in 'Preview Mode' with demo credentials: admin@admin.com / password"
   );
 }
 

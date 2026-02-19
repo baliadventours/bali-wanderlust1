@@ -22,10 +22,10 @@ export const LoginForm: React.FC = () => {
     setError(null);
     
     if (!isConfigured) {
-      if (email.trim() === 'admin@toursphere.com' && password === 'password123') {
+      if (email.trim() === 'admin@admin.com' && password === 'password') {
         setTimeout(() => {
           setAuth(
-            { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+            { id: 'demo-admin', email: 'admin@admin.com' } as any,
             { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
           );
           navigate('/admin');
@@ -34,7 +34,7 @@ export const LoginForm: React.FC = () => {
         return;
       }
       
-      setError('Invalid demo credentials. Use admin@toursphere.com / password123');
+      setError('Invalid demo credentials. Use admin@admin.com / password');
       setLoading(false);
       return;
     }
@@ -53,13 +53,13 @@ export const LoginForm: React.FC = () => {
   };
 
   const handleDemoAdmin = () => {
-    setEmail('admin@toursphere.com');
-    setPassword('password123');
+    setEmail('admin@admin.com');
+    setPassword('password');
     if (!isConfigured) {
       setLoading(true);
       setTimeout(() => {
         setAuth(
-          { id: 'demo-admin', email: 'admin@toursphere.com' } as any,
+          { id: 'demo-admin', email: 'admin@admin.com' } as any,
           { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
         );
         navigate('/admin');
@@ -96,7 +96,7 @@ export const LoginForm: React.FC = () => {
           <input 
             type="email" 
             required
-            placeholder="admin@toursphere.com"
+            placeholder="admin@admin.com"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
