@@ -71,23 +71,26 @@ export function useTourDetail(slug: string) {
           avg_rating: 4.8,
           review_count: 109,
           destination: { id: 'ubud-bali', slug: 'ubud-bali', name: { en: 'Ubud, Bali' } },
+          // Fixed: Wrapped strings into TourHighlight objects to match interface
           highlights: [
-            'Have a safe time rafting with the help of a trained guide.',
-            'Take advantage of the free lunch spread.',
-            'Get round-trip transfers from your Ubud hotel to make things easier for you.',
-            'You will have access to changing rooms with towels and toiletries.'
+            { content: 'Have a safe time rafting with the help of a trained guide.' },
+            { content: 'Take advantage of the free lunch spread.' },
+            { content: 'Get round-trip transfers from your Ubud hotel to make things easier for you.' },
+            { content: 'You will have access to changing rooms with towels and toiletries.' }
           ],
+          // Fixed: Wrapped strings into TourInclusion objects to match interface
           inclusions: [
-            'Safety-approved Rafting equipment',
-            'Professional River Guide',
-            'Meal (Lunch Box)',
-            'All Fees and Taxes',
-            'Insurance Coverage',
-            'Shampoo, bath soap, Towel, Locker, shower, and changing room'
+            { content: 'Safety-approved Rafting equipment', type: 'include' },
+            { content: 'Professional River Guide', type: 'include' },
+            { content: 'Meal (Lunch Box)', type: 'include' },
+            { content: 'All Fees and Taxes', type: 'include' },
+            { content: 'Insurance Coverage', type: 'include' },
+            { content: 'Shampoo, bath soap, Towel, Locker, shower, and changing room', type: 'include' }
           ],
+          // Fixed: Added exclusions array and wrapped strings into TourInclusion objects
           exclusions: [
-            'Souvenir photos (available to purchase)',
-            'Soft Drink'
+            { content: 'Souvenir photos (available to purchase)', type: 'exclude' },
+            { content: 'Soft Drink', type: 'exclude' }
           ],
           itineraries: [
             { id: 'i1', day_number: 1, title: { en: 'Arrival & Safety Briefing' }, description: { en: 'Arrive at the starting point, receive your equipment, and get a thorough safety briefing from our expert guides.' } },
