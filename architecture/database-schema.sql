@@ -206,16 +206,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Note: In Supabase, the trigger would be created like this:
--- CREATE TRIGGER on_auth_user_created
---   AFTER INSERT ON auth.users
---   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
 -- ==========================================
--- 4. MASSIVE DATA SEEDING
+-- 4. DETERMINISTIC DATA SEEDING
 -- ==========================================
+-- Using fixed namespaces for deterministic UUID generation
+-- Namespace for Users: '6ba7b810-9dad-11d1-80b4-00c04fd430c8' (standard DNS namespace)
+-- Using uuid_generate_v5 to ensure ID consistency across runs
 
--- A. Reference Data
+-- A. Reference Data (Fixed IDs)
 INSERT INTO public.tour_categories (id, name, slug) VALUES
 ('c1000000-0000-0000-0000-000000000001', 'Adventure', 'adventure'),
 ('c1000000-0000-0000-0000-000000000002', 'Cultural', 'cultural'),
@@ -237,21 +235,21 @@ INSERT INTO public.tour_facts (id, name, icon) VALUES
 ('f1000000-0000-0000-0000-000000000001', 'Duration', 'clock'),
 ('f1000000-0000-0000-0000-000000000002', 'Difficulty', 'zap');
 
--- B. 2 Administrators
+-- B. 2 Deterministic Administrators
 INSERT INTO public.profiles (id, full_name, email, role, avatar_url) VALUES
 ('00000000-0000-0000-0000-000000000001', 'System Admin', 'admin@admin.com', 'admin', 'https://i.pravatar.cc/150?u=admin'),
 ('00000000-0000-0000-0000-000000000002', 'Operations Lead', 'ops@toursphere.com', 'admin', 'https://i.pravatar.cc/150?u=ops');
 
--- C. 20 Customers
+-- C. 20 Deterministic Customers
 INSERT INTO public.profiles (id, full_name, email, role)
 SELECT 
-    uuid_generate_v4(), 
+    uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'customer_' || i), 
     'Customer ' || i, 
     'user' || i || '@example.com', 
     'customer'
 FROM generate_series(1, 20) AS i;
 
--- D. 20 Detailed Tours
+-- D. 20 Deterministic Tours
 DO $$
 DECLARE
     cat_id UUID := 'c1000000-0000-0000-0000-000000000001';
@@ -259,9 +257,10 @@ DECLARE
     type_id UUID := '71000000-0000-0000-0000-000000000001';
     t_id UUID;
     i INT;
+    t_avail_id UUID;
 BEGIN
     FOR i IN 1..20 LOOP
-        t_id := uuid_generate_v4();
+        t_id := uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'tour_' || i);
         
         IF i > 4 THEN dest_id := 'd1000000-0000-0000-0000-000000000002'; END IF;
         IF i > 8 THEN dest_id := 'd1000000-0000-0000-0000-000000000003'; END IF;
@@ -278,7 +277,11 @@ BEGIN
             50 + (i * 10),
             240 + (i * 30),
             12,
-            (ARRAY['beginner', 'intermediate', 'advanced'])[floor(random() * 3 + 1)]::difficulty_level,
+            CASE 
+              WHEN i % 3 = 0 THEN 'beginner'::difficulty_level
+              WHEN i % 3 = 1 THEN 'intermediate'::difficulty_level
+              ELSE 'advanced'::difficulty_level
+            END,
             ARRAY['https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800']
         );
 
@@ -294,16 +297,20 @@ BEGIN
             '[{"people": 1, "price": 150}, {"people": 4, "price": 120}, {"people": 8, "price": 95}]',
             150
         );
-        INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES
-        (t_id, NOW() + (i || ' days')::interval, 12, 12);
+        
+        -- Availability (Fixed ID for bookings consistency)
+        t_avail_id := uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'tour_availability_' || i);
+        INSERT INTO public.tour_availability (id, tour_id, start_time, available_spots, total_spots) VALUES
+        (t_avail_id, t_id, (CURRENT_DATE + (i || ' days')::interval)::timestamptz, 12, 12);
     END LOOP;
 END $$;
 
--- E. 10 Active Blog Posts
-INSERT INTO public.blog_posts (slug, title, excerpt, content, featured_image, category, author_id)
+-- E. 10 Deterministic Blog Posts
+INSERT INTO public.blog_posts (id, slug, title, excerpt, content, featured_image, category, author_id)
 SELECT 
+    uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'blog_post_' || i),
     'journal-post-' || i,
-    jsonb_build_object('en', 'Secrets of ' || (ARRAY['Bali', 'Iceland', 'Japan', 'The Alps', 'Cairo'])[floor(random() * 5 + 1)] || ' #' || i),
+    jsonb_build_object('en', 'Secrets of Travel #' || i),
     jsonb_build_object('en', 'Discover the hidden secrets and local favorites that tourists often miss in this definitive guide.'),
     jsonb_build_object('en', '<h1>The Ultimate Guide to Slow Travel</h1><p>Travel is not just about ticking boxes. It is about the smell of the morning air, the sound of the local dialect, and the taste of authentic food. In this article, we dive deep into how you can transform your next trip into a soul-stirring journey...</p><p>We spent 3 months living with locals to bring you these exclusive tips...</p>'),
     'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800',
@@ -311,11 +318,12 @@ SELECT
     '00000000-0000-0000-0000-000000000001'
 FROM generate_series(1, 10) AS i;
 
--- F. 30 Active Bookings
-INSERT INTO public.bookings (customer_id, availability_id, total_amount_usd)
+-- F. 30 Deterministic Bookings
+INSERT INTO public.bookings (id, customer_id, availability_id, total_amount_usd)
 SELECT 
-    (SELECT id FROM public.profiles WHERE role = 'customer' OFFSET (floor(random() * 20)) LIMIT 1),
-    (SELECT id FROM public.tour_availability OFFSET (floor(random() * 20)) LIMIT 1),
+    uuid_generate_v5('6ba7b810-9dad-11d1-80b4-00c04fd430c8', 'booking_' || i),
+    (SELECT id FROM public.profiles WHERE role = 'customer' ORDER BY email OFFSET (i % 20) LIMIT 1),
+    (SELECT id FROM public.tour_availability ORDER BY start_time OFFSET (i % 20) LIMIT 1),
     250.00
 FROM generate_series(1, 30) AS i;
 
