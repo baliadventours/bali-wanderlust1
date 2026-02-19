@@ -98,8 +98,7 @@ export const TourListingPage: React.FC = () => {
               >
                 {t('common.all_destinations')}
               </button>
-              {/* Fix: Added optional chaining to prevent runtime errors when metaData is loading */}
-              {metaData?.destinations?.map((dest: any) => (
+              {metaData?.destinations.map((dest: any) => (
                 <button 
                   key={dest.id}
                   onClick={() => updateParams({ destination: dest.id })}
@@ -142,8 +141,7 @@ export const TourListingPage: React.FC = () => {
               >
                 {t('common.all_types')}
               </button>
-              {/* Fix: Added optional chaining to resolve Property 'tourTypes' does not exist error and handle potential undefined loading state */}
-              {metaData?.tourTypes?.map((type: any) => (
+              {metaData?.tourTypes.map((type: any) => (
                 <button 
                   key={type.id}
                   onClick={() => updateParams({ type: type.id })}

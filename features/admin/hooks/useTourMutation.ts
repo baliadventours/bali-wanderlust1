@@ -12,6 +12,12 @@ export function useTourMutation() {
         return { id: data.id || 'mock-id' };
       }
 
+      // Check Session Integrity
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Authentication Required: Your session has expired. Please log in again to perform this action.");
+      }
+
       const isNew = !data.id || data.id === 'create';
       const tourPayload = { 
         title: data.title, 
@@ -22,12 +28,6 @@ export function useTourMutation() {
         destination_id: data.destination_id,
         important_info: data.important_info,
         booking_policy: data.booking_policy,
-        base_price_usd: Number(data.base_price_usd || 0),
-        duration_minutes: Number(data.duration_minutes || 0),
-        max_participants: Number(data.max_participants || 0),
-        difficulty: data.difficulty || 'Moderate',
-        images: data.images || [],
-        is_published: data.status === 'published',
         updated_at: new Date().toISOString()
       };
 
@@ -35,16 +35,21 @@ export function useTourMutation() {
 
       if (isNew) {
         const { data: newTour, error } = await supabase.from('tours').insert(tourPayload).select('id').single();
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase Insert Error:", error);
+          throw error;
+        }
         tourId = newTour.id;
       } else {
         const { error } = await supabase.from('tours').update(tourPayload).eq('id', tourId);
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase Update Error:", error);
+          throw error;
+        }
       }
 
-      // Sync Related Child Tables logic...
-      // Helper to sync simple arrays
-      const syncSimple = async (table: string, items: any[], mapFn: (item: any) => any) => {
+      // Sync Related Child Tables
+      const syncTable = async (table: string, items: any[], mapFn: (item: any) => any) => {
         await supabase.from(table).delete().eq('tour_id', tourId);
         if (items && items.length > 0) {
           const payload = items.map((i, idx) => ({ ...mapFn(i), tour_id: tourId, sort_order: idx }));
@@ -54,14 +59,31 @@ export function useTourMutation() {
       };
 
       await Promise.all([
-        syncSimple('tour_itineraries', data.itineraries || [], i => ({ title: i.title, description: i.description, day_number: i.day_number, time_label: i.time_label, image_url: i.image_url })),
-        syncSimple('tour_gallery', data.gallery || [], g => ({ image_url: g.image_url })),
-        syncSimple('tour_highlights', data.highlights || [], h => ({ content: h.content })),
-        syncSimple('tour_faq', data.faqs || [], f => ({ question: f.question, answer: f.answer })),
-        syncSimple('tour_inclusions', data.inclusions || [], i => ({ content: i.content, type: i.type })),
-        syncSimple('tour_reviews', data.reviews || [], r => ({ reviewer_name: r.reviewer_name, rating: Number(r.rating), comment: r.comment })),
-        syncSimple('tour_fact_values', data.facts || [], f => ({ fact_id: f.fact_id, value: f.value })),
+        syncTable('tour_itineraries', data.itineraries || [], i => ({ title: i.title, description: i.description, day_number: i.day_number, time_label: i.time_label, image_url: i.image_url })),
+        syncTable('tour_gallery', data.gallery || [], g => ({ image_url: g.image_url })),
+        syncTable('tour_highlights', data.highlights || [], h => ({ content: h.content })),
+        syncTable('tour_faq', data.faqs || [], f => ({ question: f.question, answer: f.answer })),
+        syncTable('tour_inclusions', data.inclusions || [], i => ({ content: i.content, type: i.type })),
+        syncTable('tour_reviews', data.reviews || [], r => ({ reviewer_name: r.reviewer_name, rating: Number(r.rating), comment: r.comment })),
+        syncTable('tour_fact_values', data.facts || [], f => ({ fact_id: f.fact_id, value: f.value })),
+        syncTable('tour_pricing_packages', data.pricing_packages || [], p => ({ 
+          package_name: p.package_name, 
+          description: p.description,
+          price_tiers: p.price_tiers || [],
+          base_price: Number(p.base_price || 0), 
+          min_people: Number(p.min_people || 1), 
+          max_people: Number(p.max_people || 10) 
+        }))
       ]);
+
+      // Sync Related Tours Join Table
+      if (data.related_tour_ids) {
+        await supabase.from('related_tours').delete().eq('tour_id', tourId);
+        if (data.related_tour_ids.length > 0) {
+          const rtPayload = data.related_tour_ids.map((rid: string) => ({ tour_id: tourId, related_tour_id: rid }));
+          await supabase.from('related_tours').insert(rtPayload);
+        }
+      }
 
       return { id: tourId };
     },
