@@ -48,8 +48,10 @@ const LoadingFallback = () => (
 );
 
 const Home = () => {
-  const { data: toursData } = useTours({});
-  const { data: posts } = useBlog();
+  const { data: toursData, isLoading: toursLoading } = useTours({});
+  const { data: posts, isLoading: postsLoading } = useBlog();
+
+  if (toursLoading && !toursData) return <LoadingFallback />;
 
   return (
     <div className="space-y-24 pb-20">
@@ -92,9 +94,12 @@ const Home = () => {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {toursData?.data.slice(0, 3).map(tour => (
+          {toursData?.data?.slice(0, 3).map(tour => (
             <TourCard key={tour.id} tour={tour} />
           ))}
+          {!toursLoading && (!toursData?.data || toursData.data.length === 0) && (
+             <div className="col-span-full py-20 text-center text-slate-400 font-bold">No expeditions found matching your selection.</div>
+          )}
         </div>
       </section>
 
