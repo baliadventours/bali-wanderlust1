@@ -48,7 +48,7 @@ CREATE TYPE public.difficulty_level AS ENUM ('beginner', 'intermediate', 'advanc
 -- 3. CORE PROFILES TABLE
 -- ==========================================
 CREATE TABLE public.profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY, -- Removed FK to auth.users for pure seed capability, though in prod it should be linked
     full_name TEXT,
     email TEXT,
     avatar_url TEXT,
@@ -212,7 +212,7 @@ CREATE TABLE public.tour_addons (
 CREATE TABLE public.discount_codes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code TEXT UNIQUE NOT NULL,
-    discount_type TEXT NOT NULL, -- 'percentage' or 'fixed'
+    discount_type TEXT NOT NULL,
     value DECIMAL(12,2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -286,7 +286,6 @@ ALTER TABLE public.destinations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
 
--- Explicitly Grant Permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
@@ -295,55 +294,16 @@ GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
 -- POLICIES
 CREATE POLICY "Public Read Profiles" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users Update Own Profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users Insert Own Profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
 CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (true);
-CREATE POLICY "Admin Manage Tours" ON public.tours FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
-
 CREATE POLICY "Public Read Availability" ON public.tour_availability FOR SELECT USING (true);
-CREATE POLICY "Admin Manage Availability" ON public.tour_availability FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
-
 CREATE POLICY "Users Read Own Bookings" ON public.bookings FOR SELECT USING (customer_id = auth.uid());
-CREATE POLICY "Admin Manage Bookings" ON public.bookings FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
-
 CREATE POLICY "Public Read Blog" ON public.blog_posts FOR SELECT USING (true);
 CREATE POLICY "Public Read Categories" ON public.tour_categories FOR SELECT USING (true);
 CREATE POLICY "Public Read Destinations" ON public.destinations FOR SELECT USING (true);
 CREATE POLICY "Public Read Tour Types" ON public.tour_types FOR SELECT USING (true);
 
 -- ==========================================
--- 13. AUTH TRIGGER (Auto-Grant Admin)
--- ==========================================
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, email, role)
-  VALUES (
-    new.id, 
-    COALESCE(new.raw_user_meta_data->>'full_name', 'New Traveler'), 
-    new.email, 
-    'admin' -- ALL USERS ARE ADMINS FOR DEVELOPMENT
-  )
-  ON CONFLICT (id) DO UPDATE SET 
-    role = 'admin', 
-    full_name = EXCLUDED.full_name, 
-    email = EXCLUDED.email;
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- ==========================================
--- 14. SEED DATA (THE GOLDEN PACK)
+-- 14. MASSIVE SEED DATA INJECTION
 -- ==========================================
 
 -- A. Categories
@@ -358,55 +318,158 @@ INSERT INTO public.tour_categories (id, name, slug) VALUES
 INSERT INTO public.destinations (id, name, slug) VALUES
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '{"en": "Bali", "es": "Bali"}', 'bali'),
 ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '{"en": "Iceland", "es": "Islandia"}', 'iceland'),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', '{"en": "Japan", "es": "Japón"}', 'japan');
+('cccccccc-cccc-cccc-cccc-cccccccccccc', '{"en": "Japan", "es": "Japón"}', 'japan'),
+('dddddddd-dddd-dddd-dddd-dddddddddddd', '{"en": "Italy", "es": "Italia"}', 'italy'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '{"en": "Peru", "es": "Perú"}', 'peru');
 
--- C. Tour Types (Fixed: Replaced invalid 't' prefix with valid hex '9')
+-- C. Tour Types
 INSERT INTO public.tour_types (id, name, slug) VALUES
 ('91111111-1111-1111-1111-111111111111', '{"en": "Hiking", "es": "Senderismo"}', 'hiking'),
 ('92222222-2222-2222-2222-222222222222', '{"en": "Water Sports", "es": "Deportes Acuáticos"}', 'water-sports'),
-('93333333-3333-3333-3333-333333333333', '{"en": "Foodie", "es": "Gastronomía"}', 'foodie');
+('93333333-3333-3333-3333-333333333333', '{"en": "Foodie", "es": "Gastronomía"}', 'foodie'),
+('94444444-4444-4444-4444-444444444444', '{"en": "Photography", "es": "Fotografía"}', 'photography'),
+('95555555-5555-5555-5555-555555555555', '{"en": "Wellness", "es": "Bienestar"}', 'wellness');
 
 -- D. Tour Facts
 INSERT INTO public.tour_facts (id, name, icon) VALUES
 ('f1111111-1111-1111-1111-111111111111', 'Duration', 'clock'),
 ('f2222222-2222-2222-2222-222222222222', 'Difficulty', 'zap'),
-('f3333333-3333-3333-3333-333333333333', 'Max Group', 'users');
+('f3333333-3333-3333-3333-333333333333', 'Max Group', 'users'),
+('f4444444-4444-4444-4444-444444444444', 'Transport', 'truck');
 
--- E. Premium Tour 1: Ubud Jungle
-INSERT INTO public.tours (id, title, slug, category_id, destination_id, description, base_price_usd, duration_minutes, max_participants, status, is_published, difficulty, images) VALUES
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 
- '{"en": "Ubud Jungle & Sacred Monkey Forest", "es": "Selva de Ubud y Bosque Sagrado"}', 
- 'ubud-jungle-highlights', 
- '22222222-2222-2222-2222-222222222222', 
- 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 
- '{"en": "Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace and the spiritual Monkey Forest.", "es": "Explora el exuberante corazón de Bali con una visita a la terraza de arroz de Tegalalang."}', 
- 45.00, 480, 10, 'published', TRUE, 'beginner', 
- '{"https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=1200", "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=1200"}');
+-- E. Profiles (20 Users)
+INSERT INTO public.profiles (id, full_name, email, role, avatar_url) VALUES
+('u0000000-0000-0000-0000-000000000001', 'Admin Chief', 'admin@admin.com', 'admin', 'https://i.pravatar.cc/150?u=admin'),
+('u0000000-0000-0000-0000-000000000002', 'Alice Wonder', 'alice@example.com', 'customer', 'https://i.pravatar.cc/150?u=alice'),
+('u0000000-0000-0000-0000-000000000003', 'Bob Builder', 'bob@example.com', 'customer', 'https://i.pravatar.cc/150?u=bob'),
+('u0000000-0000-0000-0000-000000000004', 'Charlie Brown', 'charlie@example.com', 'customer', 'https://i.pravatar.cc/150?u=charlie'),
+('u0000000-0000-0000-0000-000000000005', 'Diana Prince', 'diana@example.com', 'customer', 'https://i.pravatar.cc/150?u=diana'),
+('u0000000-0000-0000-0000-000000000006', 'Ethan Hunt', 'ethan@example.com', 'customer', 'https://i.pravatar.cc/150?u=ethan'),
+('u0000000-0000-0000-0000-000000000007', 'Fiona Apple', 'fiona@example.com', 'customer', 'https://i.pravatar.cc/150?u=fiona'),
+('u0000000-0000-0000-0000-000000000008', 'George Miller', 'george@example.com', 'customer', 'https://i.pravatar.cc/150?u=george'),
+('u0000000-0000-0000-0000-000000000009', 'Hannah Baker', 'hannah@example.com', 'customer', 'https://i.pravatar.cc/150?u=hannah'),
+('u0000000-0000-0000-0000-000000000010', 'Ian Wright', 'ian@example.com', 'customer', 'https://i.pravatar.cc/150?u=ian'),
+('u0000000-0000-0000-0000-000000000011', 'Jack Sparrow', 'jack@example.com', 'customer', 'https://i.pravatar.cc/150?u=jack'),
+('u0000000-0000-0000-0000-000000000012', 'Kelly Clark', 'kelly@example.com', 'customer', 'https://i.pravatar.cc/150?u=kelly'),
+('u0000000-0000-0000-0000-000000000013', 'Liam Neeson', 'liam@example.com', 'customer', 'https://i.pravatar.cc/150?u=liam'),
+('u0000000-0000-0000-0000-000000000014', 'Mona Lisa', 'mona@example.com', 'customer', 'https://i.pravatar.cc/150?u=mona'),
+('u0000000-0000-0000-0000-000000000015', 'Noah Ark', 'noah@example.com', 'customer', 'https://i.pravatar.cc/150?u=noah'),
+('u0000000-0000-0000-0000-000000000016', 'Olivia Pope', 'olivia@example.com', 'customer', 'https://i.pravatar.cc/150?u=olivia'),
+('u0000000-0000-0000-0000-000000000017', 'Paul Atreides', 'paul@example.com', 'customer', 'https://i.pravatar.cc/150?u=paul'),
+('u0000000-0000-0000-0000-000000000018', 'Quinn Fabray', 'quinn@example.com', 'customer', 'https://i.pravatar.cc/150?u=quinn'),
+('u0000000-0000-0000-0000-000000000019', 'Riley Reid', 'riley@example.com', 'customer', 'https://i.pravatar.cc/150?u=riley'),
+('u0000000-0000-0000-0000-000000000020', 'Steve Jobs', 'steve@example.com', 'customer', 'https://i.pravatar.cc/150?u=steve');
 
-INSERT INTO public.tour_itineraries (tour_id, day_number, title, description, time_label) VALUES
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 1, '{"en": "Morning Pick-up"}', '{"en": "Our guide will meet you at your hotel."}', '08:00'),
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 1, '{"en": "Rice Terrace Walk"}', '{"en": "Wander through the iconic Tegalalang terraces."}', '10:00'),
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 1, '{"en": "Lunch with a View"}', '{"en": "Enjoy Balinese cuisine overlooking the jungle."}', '13:00');
+-- F. Tours (20 Tours)
+-- We use a loop for some, but defining the first few explicitly for accuracy
+INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, status, is_published, difficulty, images) VALUES
+('e0000000-0000-0000-0000-000000000001', '{"en": "Ubud Jungle & Sacred Monkey Forest"}', 'ubud-jungle-highlights', '22222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '94444444-4444-4444-4444-444444444444', '{"en": "Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace and the spiritual Monkey Forest."}', 45, 480, 10, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&w=800"}'),
+('e0000000-0000-0000-0000-000000000002', '{"en": "Mt Batur Active Volcano Sunrise Trek"}', 'mt-batur-sunrise', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '91111111-1111-1111-1111-111111111111', '{"en": "Hike to the summit of an active volcano and watch the sunrise from 1,717 meters above sea level."}', 65, 600, 15, 'published', TRUE, 'intermediate', '{"https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000003', '{"en": "Golden Circle & Blue Lagoon"}', 'iceland-golden-circle', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '94444444-4444-4444-4444-444444444444', '{"en": "Witness the power of nature at Geysir, Gullfoss waterfall, and relax in the geothermal waters."}', 180, 540, 20, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000004', '{"en": "Kyoto Temples & Tea Ceremony"}', 'kyoto-temples-tea', '22222222-2222-2222-2222-222222222222', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '93333333-3333-3333-3333-333333333333', '{"en": "Immerse yourself in Zen culture with visits to the Golden Pavilion and a private tea ceremony."}', 120, 360, 8, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000005', '{"en": "Rome Colosseum Private Access"}', 'rome-colosseum-vip', '44444444-4444-4444-4444-444444444444', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '94444444-4444-4444-4444-444444444444', '{"en": "Skip the lines and explore the underground chambers of the Colosseum with an archaeologist."}', 250, 240, 6, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000006', '{"en": "Machu Picchu Sunrise Expedition"}', 'machu-picchu-sunrise', '11111111-1111-1111-1111-111111111111', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '91111111-1111-1111-1111-111111111111', '{"en": "The ultimate Inca trail experience culminating in a breathtaking sunrise over the lost city."}', 450, 2880, 12, 'published', TRUE, 'advanced', '{"https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000007', '{"en": "Tuscany Wine & Truffle Hunting"}', 'tuscany-wine-truffle', '44444444-4444-4444-4444-444444444444', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '93333333-3333-3333-3333-333333333333', '{"en": "Join a local hunter and his dog to find black gold, followed by a 5-course wine pairing lunch."}', 195, 300, 10, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1543418219-44e30b057ebd?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000008', '{"en": "Tokyo Street Food Safari"}', 'tokyo-street-food', '22222222-2222-2222-2222-222222222222', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '93333333-3333-3333-3333-333333333333', '{"en": "Navigate the neon alleys of Shinjuku and Sunamachi to taste the best yakitori, gyoza, and mochi."}', 85, 240, 12, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000009', '{"en": "Nusa Penida: Manta Ray Snorkel"}', 'nusa-penida-manta', '11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '92222222-2222-2222-2222-222222222222', '{"en": "Swim alongside majestic Manta Rays in the crystal clear waters off the coast of Bali."}', 75, 480, 15, 'published', TRUE, 'intermediate', '{"https://images.unsplash.com/photo-1544928147-79a2dbc1f389?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000010', '{"en": "Venice Gondola & Hidden Bacari"}', 'venice-gondola-food', '22222222-2222-2222-2222-222222222222', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '93333333-3333-3333-3333-333333333333', '{"en": "Glide through the canals before hitting the local wine bars for Cicchetti and Prosecco."}', 110, 180, 6, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000011', '{"en": "Arctic Northern Lights Hunt"}', 'arctic-aurora-hunt', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '94444444-4444-4444-4444-444444444444', '{"en": "Join expert photographers to chase the Aurora Borealis in the Icelandic wilderness."}', 140, 240, 16, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1531366930499-41f695558bb2?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000012', '{"en": "Sacred Valley Zip Line & Yoga"}', 'sacred-valley-yoga', '33333333-3333-3333-3333-333333333333', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '95555555-5555-5555-5555-555555555555', '{"en": "Find balance with high-altitude yoga and an adrenaline-pumping zipline over the Andean valley."}', 165, 480, 10, 'published', TRUE, 'intermediate', '{"https://images.unsplash.com/photo-1518005020250-675f210fe309?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000013', '{"en": "Amalfi Coast Scenic Drive & Lunch"}', 'amalfi-scenic-drive', '44444444-4444-4444-4444-444444444444', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '94444444-4444-4444-4444-444444444444', '{"en": "Experience the most beautiful coastline in the world from a vintage Italian convertible."}', 350, 420, 2, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1533924736468-daee5293453b?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000014', '{"en": "Mount Fuji & Five Lakes Private Tour"}', 'mt-fuji-private', '55555555-5555-5555-5555-555555555555', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '91111111-1111-1111-1111-111111111111', '{"en": "Travel in luxury to the base of Japan iconic peak and enjoy a boat cruise on Lake Ashi."}', 320, 600, 7, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1490806678282-4410583561a3?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000015', '{"en": "Ubud Art & Silversmithing Workshop"}', 'ubud-silver-workshop', '22222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '94444444-4444-4444-4444-444444444444', '{"en": "Create your own unique sterling silver jewelry with guidance from a master Balinese silversmith."}', 55, 180, 5, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000016', '{"en": "Icelandic Horseback Riding & Thermal Springs"}', 'iceland-horse-spa', '33333333-3333-3333-3333-333333333333', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '95555555-5555-5555-5555-555555555555', '{"en": "Ride the unique Icelandic horses through lava fields and finish with a soak in a secret hot spring."}', 155, 300, 10, 'published', TRUE, 'intermediate', '{"https://images.unsplash.com/photo-1504541891213-1b1dfdadb739?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000017', '{"en": "Colca Canyon: Andean Condor Spotting"}', 'colca-canyon-trek', '11111111-1111-1111-1111-111111111111', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '91111111-1111-1111-1111-111111111111', '{"en": "Trek through one of the deepest canyons in the world and spot the giant Andean Condor in flight."}', 220, 1440, 15, 'published', TRUE, 'advanced', '{"https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000018', '{"en": "Tokyo Akihabara Electronics & Gaming Tour"}', 'tokyo-gaming-tour', '22222222-2222-2222-2222-222222222222', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '94444444-4444-4444-4444-444444444444', '{"en": "Dive into the heart of Otaku culture with a local expert guide through neon-lit Akihabara."}', 70, 180, 10, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000019', '{"en": "Bali Sunrise Dolphin Cruise & Waterfall"}', 'bali-dolphin-waterfall', '55555555-5555-5555-5555-555555555555', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '94444444-4444-4444-4444-444444444444', '{"en": "A magical sunrise boat ride in Lovina to see wild dolphins, followed by a hidden waterfall trek."}', 80, 600, 12, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1464037862834-ee5772642398?auto=format&w=800"}'),
+('e0000000-0000-0000-0000-000000000020', '{"en": "Florence Renaissance Art & Food"}', 'florence-art-food', '22222222-2222-2222-2222-222222222222', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '93333333-3333-3333-3333-333333333333', '{"en": "Walk the path of the Medici, see the Statue of David, and enjoy a traditional Bistecca alla Fiorentina."}', 175, 360, 10, 'published', TRUE, 'beginner', '{"https://images.unsplash.com/photo-1528114039593-4366cc08227d?auto=format&w=800"}');
 
-INSERT INTO public.tour_pricing_packages (tour_id, package_name, description, base_price, max_people) VALUES
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 'Standard Day Pass', 'Full access to all listed sites and lunch.', 45.00, 10);
+-- G. Child Tables for Tours (Itineraries, Highlights, etc.)
+DO $$
+DECLARE
+    t_id UUID;
+BEGIN
+    FOR t_id IN SELECT id FROM public.tours LOOP
+        -- Highlights
+        INSERT INTO public.tour_highlights (tour_id, content, sort_order) VALUES
+        (t_id, 'Expert local English-speaking guide', 0),
+        (t_id, 'All entrance fees and site taxes included', 1),
+        (t_id, 'Small group size for personalized attention', 2),
+        (t_id, 'High-quality equipment and safety gear', 3),
+        (t_id, 'Authentic local lunch with vegetarian options', 4);
 
--- F. Premium Tour 2: Mt Batur
-INSERT INTO public.tours (id, title, slug, category_id, destination_id, description, base_price_usd, duration_minutes, max_participants, status, is_published, difficulty, images) VALUES
-('e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', 
- '{"en": "Mount Batur Active Volcano Sunrise Trek", "es": "Caminata al Amanecer Monte Batur"}', 
- 'mt-batur-sunrise', 
- '11111111-1111-1111-1111-111111111111', 
- 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 
- '{"en": "Hike to the summit of an active volcano and watch the sunrise from 1,717 meters above sea level.", "es": "Camina hasta la cima de un volcán activo y observa el amanecer."}', 
- 65.00, 600, 15, 'published', TRUE, 'intermediate', 
- '{"https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&fit=crop&q=80&w=1200"}');
+        -- Inclusions
+        INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES
+        (t_id, 'Pickup and drop-off from main hotels', 'include'),
+        (t_id, 'Professional river/mountain guide', 'include'),
+        (t_id, 'Insurance coverage', 'include'),
+        (t_id, 'Gifts or personal souvenirs', 'exclude'),
+        (t_id, 'Tips and gratuities for staff', 'exclude');
 
-INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', NOW() + INTERVAL '2 days', 10, 10),
-('e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', NOW() + INTERVAL '5 days', 8, 10),
-('e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', NOW() + INTERVAL '3 days', 15, 15);
+        -- FAQ
+        INSERT INTO public.tour_faq (tour_id, question, answer) VALUES
+        (t_id, 'What should I bring?', 'Comfortable shoes, sunscreen, and a reusable water bottle.'),
+        (t_id, 'Is this suitable for children?', 'Most of our tours are family-friendly, but check the difficulty level.');
 
--- G. Blog Posts
-INSERT INTO public.blog_posts (title, slug, excerpt, content, featured_image, category, is_published) VALUES
-('{"en": "Packing for Iceland: The Ultimate Guide"}', 'packing-for-iceland', '{"en": "Don’t let the cold ruin your trip."}', '{"en": "Layers are everything in the land of fire and ice."}', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&q=80&w=800', 'Guides', TRUE);
+        -- Itinerary Day 1
+        INSERT INTO public.tour_itineraries (tour_id, day_number, time_label, title, description) VALUES
+        (t_id, 1, '08:30', '{"en": "Expedition Kick-off"}', '{"en": "Meet your guide and group at the designated starting point for a brief orientation."}');
+
+        -- Pricing Packages
+        INSERT INTO public.tour_pricing_packages (tour_id, package_name, description, base_price, max_people) VALUES
+        (t_id, 'Standard Expedition', 'Complete tour experience with standard inclusions.', 100, 10),
+        (t_id, 'Private VIP Package', 'Private guide and luxury transport for your group.', 500, 4);
+
+        -- Fact Values
+        INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES
+        (t_id, 'f1111111-1111-1111-1111-111111111111', '8 Hours'),
+        (t_id, 'f2222222-2222-2222-2222-222222222222', 'Intermediate'),
+        (t_id, 'f3333333-3333-3333-3333-333333333333', '12 Max');
+
+        -- Availability
+        INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES
+        (t_id, NOW() + INTERVAL '2 days', 10, 12),
+        (t_id, NOW() + INTERVAL '5 days', 5, 12);
+    END LOOP;
+END $$;
+
+-- H. Blog Posts (20 Posts)
+INSERT INTO public.blog_posts (title, slug, excerpt, content, featured_image, category, is_published, reading_time_minutes) VALUES
+('{"en": "10 Hidden Gems in Bali You Must Visit"}', 'bali-hidden-gems', '{"en": "Beyond Kuta and Seminyak lies a world of secret waterfalls and silent temples."}', '{"en": "Content goes here about Bali waterfalls."}', 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&w=600', 'Guides', TRUE, 6),
+('{"en": "Iceland Packing: Survive the Arctic"}', 'iceland-packing', '{"en": "The ultimate layer guide for staying warm while chasing glaciers."}', '{"en": "Icelandic weather is unpredictable..."}', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&w=600', 'Travel Tips', TRUE, 8),
+('{"en": "How to Eat Like a Local in Tokyo"}', 'tokyo-foodie-guide', '{"en": "A guide to navigating ticket machines and finding the best back-alley ramen."}', '{"en": "Tokyo is a culinary wonderland..."}', 'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&w=600', 'Food', TRUE, 10),
+('{"en": "The Spirit of Kyoto: Tea Ceremony 101"}', 'kyoto-tea-ceremony', '{"en": "Understanding the history and etiquette of the ancient matcha ritual."}', '{"en": "Kyoto is the cultural heart of Japan."}', 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&w=600', 'Culture', TRUE, 5),
+('{"en": "Machu Picchu: Sunrise vs Sunset"}', 'machu-picchu-timing', '{"en": "We compared the views to help you decide when to book your entry."}', '{"en": "Machu Picchu entry is now strictly timed."}', 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&w=600', 'Guides', TRUE, 7),
+('{"en": "Tuscany: The Best Time for Truffles"}', 'tuscany-truffle-season', '{"en": "A seasonal guide for mushroom lovers visiting the Italian countryside."}', '{"en": "Autumn in Italy means truffles..."}', 'https://images.unsplash.com/photo-1543418219-44e30b057ebd?auto=format&w=600', 'Food', TRUE, 4),
+('{"en": "Capturing the Aurora: Camera Settings"}', 'aurora-photography-tips', '{"en": "How to get the perfect green glow without a $5k camera setup."}', '{"en": "Night photography is tricky..."}', 'https://images.unsplash.com/photo-1531366930499-41f695558bb2?auto=format&w=600', 'Photography', TRUE, 9),
+('{"en": "Solo Travel in Peru: A Safety Guide"}', 'peru-solo-safety', '{"en": "Is Peru safe for solo female travelers? We answer your burning questions."}', '{"en": "Peru is a welcoming country..."}', 'https://images.unsplash.com/photo-1518005020250-675f210fe309?auto=format&w=600', 'Travel Tips', TRUE, 6),
+('{"en": "Venice: Avoiding the Tourist Traps"}', 'venice-avoid-traps', '{"en": "How to see the Floating City without spending 20 Euro on a coffee."}', '{"en": "Venice is expensive but worth it..."}', 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&w=600', 'Culture', TRUE, 11),
+('{"en": "Bali Spirit: A Wellness Deep Dive"}', 'bali-wellness-retreats', '{"en": "The best yoga shalas and detoxification centers in Ubud."}', '{"en": "Bali is known as the Island of the Gods..."}', 'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&w=600', 'Wellness', TRUE, 8),
+('{"en": "Rome: The Underground History"}', 'rome-underground-history', '{"en": "What lies beneath the cobblestones of the Eternal City."}', '{"en": "Rome has layers of history..."}', 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&w=600', 'Culture', TRUE, 12),
+('{"en": "Five Lakes: Best Views of Mt Fuji"}', 'mt-fuji-viewpoints', '{"en": "The most photogenic spots around Japans most iconic mountain."}', '{"en": "Mt Fuji is shy but beautiful..."}', 'https://images.unsplash.com/photo-1490806678282-4410583561a3?auto=format&w=600', 'Photography', TRUE, 6),
+('{"en": "Icelandic Horses: The Friendly Gait"}', 'icelandic-horses-guide', '{"en": "Everything you need to know about the unique Tölt gait."}', '{"en": "The Icelandic horse is a small but sturdy breed..."}', 'https://images.unsplash.com/photo-1504541891213-1b1dfdadb739?auto=format&w=600', 'Adventure', TRUE, 5),
+('{"en": "Sacred Valley: Ancient Wisdom"}', 'sacred-valley-history', '{"en": "Exploring the Inca archaeological sites around Cusco."}', '{"en": "The Sacred Valley was the heart of the empire..."}', 'https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&w=600', 'Culture', TRUE, 10),
+('{"en": "Akihabara: A Gamers Paradise"}', 'akihabara-gaming-guide', '{"en": "Where to find retro consoles and the latest VR tech in Tokyo."}', '{"en": "Akihabara is electric..."}', 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&w=600', 'Culture', TRUE, 7),
+('{"en": "Lovina Dolphins: Ethical Watching"}', 'lovina-dolphins-ethics', '{"en": "How to ensure your sunrise boat trip supports conservation."}', '{"en": "Seeing wild dolphins is a dream..."}', 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?auto=format&w=600', 'Wellness', TRUE, 5),
+('{"en": "Florence: Michelangelo David Secrets"}', 'michelangelo-david-florence', '{"en": "The stories you wont hear on the standard museum tour."}', '{"en": "Michelangelo was a genius..."}', 'https://images.unsplash.com/photo-1528114039593-4366cc08227d?auto=format&w=600', 'Culture', TRUE, 9),
+('{"en": "Amalfi Coast: Drive vs Ferry"}', 'amalfi-coast-transport', '{"en": "Pros and cons for navigating the winding coastal roads."}', '{"en": "The Amalfi drive is famous..."}', 'https://images.unsplash.com/photo-1533924736468-daee5293453b?auto=format&w=600', 'Travel Tips', TRUE, 6),
+('{"en": "Bali Artisans: The Silver Secrets"}', 'bali-silver-artisans', '{"en": "Meeting the smiths who keep the Celuk tradition alive."}', '{"en": "Bali silver is renowned..."}', 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&w=600', 'Culture', TRUE, 4),
+('{"en": "Reykjavik Nightlife for Solo Travelers"}', 'reykjavik-nightlife-solo', '{"en": "The best bars to meet fellow travelers in the northernmost capital."}', '{"en": "Icelanders know how to party..."}', 'https://images.unsplash.com/photo-1531366930499-41f695558bb2?auto=format&w=600', 'Travel Tips', TRUE, 7);
+
+-- I. Bookings (30 Dummy Bookings)
+DO $$
+DECLARE
+    u_id UUID;
+    a_id UUID;
+    counter INT := 0;
+BEGIN
+    FOR u_id IN SELECT id FROM public.profiles WHERE role = 'customer' LIMIT 15 LOOP
+        FOR a_id IN SELECT id FROM public.tour_availability LIMIT 2 LOOP
+            IF counter < 30 THEN
+                INSERT INTO public.bookings (customer_id, availability_id, status, total_amount_usd, currency_code, currency_amount) VALUES
+                (u_id, a_id, (ARRAY['pending', 'confirmed', 'cancelled'])[floor(random() * 3 + 1)], floor(random() * 200 + 50), 'USD', 0);
+                counter := counter + 1;
+            END IF;
+        END LOOP;
+    END LOOP;
+END $$;
