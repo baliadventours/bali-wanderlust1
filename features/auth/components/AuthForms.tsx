@@ -25,8 +25,8 @@ export const LoginForm: React.FC = () => {
       if (email.trim() === 'admin@admin.com' && password === 'password') {
         setTimeout(() => {
           setAuth(
-            { id: 'demo-admin', email: 'admin@admin.com' } as any,
-            { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+            { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
+            { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
           );
           navigate('/admin');
           setLoading(false);
@@ -43,10 +43,10 @@ export const LoginForm: React.FC = () => {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
       
-      // Navigate immediately, AuthProvider handles the store update
+      // Profile fetching handled by AuthProvider
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. If this is your first time in Production, please Register first.');
+      setError(err.message || 'Authentication failed. Please verify your project credentials.');
     } finally {
       setLoading(false);
     }
@@ -59,8 +59,8 @@ export const LoginForm: React.FC = () => {
       setLoading(true);
       setTimeout(() => {
         setAuth(
-          { id: 'demo-admin', email: 'admin@admin.com' } as any,
-          { id: 'demo-admin', full_name: 'System Admin', role: 'admin' }
+          { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
+          { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
         );
         navigate('/admin');
         setLoading(false);
@@ -84,7 +84,7 @@ export const LoginForm: React.FC = () => {
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-[10px] flex gap-3 items-start">
              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
              <div className="text-[10px] text-amber-800 font-bold uppercase leading-relaxed">
-               First time here? You must <Link to="/register" className="underline text-amber-900">Register</Link> an account in your project before logging in.
+               First time here? <Link to="/register" className="underline text-amber-900">Register</Link> an account in your project to enable local authority.
              </div>
           </div>
         )}
@@ -129,8 +129,8 @@ export const LoginForm: React.FC = () => {
         <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-[10px] flex items-start gap-3">
           <Info className="w-4 h-4 text-emerald-600 mt-0.5" />
           <div className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">
-            <p className="mb-1 underline">{isConfigured ? 'Production Instance Active:' : 'UI Preview Mode:'}</p>
-            <p>Authentication is handled by your Supabase project.</p>
+            <p className="mb-1 underline">{isConfigured ? 'Production Database:' : 'Development Preview:'}</p>
+            <p>Admin privileges are automatically synced for admin@admin.com.</p>
           </div>
         </div>
         {!isConfigured && (
@@ -139,13 +139,13 @@ export const LoginForm: React.FC = () => {
             className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
           >
             <ShieldCheck className="w-4 h-4" />
-            Quick Sign-In (Demo)
+            Quick Sign-In (Demo Admin)
           </button>
         )}
       </div>
       
       <p className="mt-8 text-center text-xs text-slate-400 font-bold">
-        Don't have an account? <Link to="/register" className="text-emerald-600 hover:text-emerald-700 transition-colors">Join the club</Link>
+        New to the team? <Link to="/register" className="text-emerald-600 hover:text-emerald-700 transition-colors">Register as Host</Link>
       </p>
     </div>
   );
@@ -179,7 +179,7 @@ export const RegisterForm: React.FC = () => {
       });
       if (signUpError) throw signUpError;
       
-      alert("Registration successful! You can now log in. All new users in this project are automatically granted 'admin' status.");
+      alert("Registration successful! All users created in this project are automatically granted authority. If you use admin@admin.com, you get full system control.");
       navigate('/login');
     } catch (err: any) {
       setError(err.message);
@@ -217,7 +217,7 @@ export const RegisterForm: React.FC = () => {
           <input 
             type="email" 
             required
-            placeholder="john@example.com"
+            placeholder="admin@admin.com"
             className="w-full p-4 bg-slate-50 border border-slate-100 rounded-[10px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium transition-all"
             value={email}
             onChange={(e) => setEmail(e.target.value)}

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe, ListTodo } from 'lucide-react';
+import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe, ListTodo, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { LocalePicker } from '../shared/LocalePicker';
@@ -120,16 +120,16 @@ export const DashboardLayout: React.FC = () => {
   };
 
   const menuItems = [
-    { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, roles: ['customer', 'admin', 'editor'] },
+    { label: 'Intelligence', path: '/admin', icon: LayoutDashboard, roles: ['admin'] },
     { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, roles: ['customer'] },
     { type: 'divider', roles: ['admin', 'editor'] },
-    { label: 'Tour Inventory', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
-    { label: 'Hubs/Destinations', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
-    { label: 'Taxonomy/Cats', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
-    { label: 'Attribute Registry', path: '/admin/facts', icon: ListTodo, roles: ['admin', 'editor'] },
-    { label: 'Booking Orders', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
-    { label: 'Staff & Users', path: '/admin/users', icon: Users, roles: ['admin'] },
-    { label: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['customer', 'admin', 'editor'] },
+    { label: 'Inventory', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
+    { label: 'Hubs', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
+    { label: 'Taxonomy', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
+    { label: 'Metrics', path: '/admin/facts', icon: ListTodo, roles: ['admin', 'editor'] },
+    { label: 'Transactions', path: '/admin/bookings', icon: ShieldCheck, roles: ['admin', 'editor'] },
+    { label: 'Authorities', path: '/admin/users', icon: Users, roles: ['admin'] },
+    { label: 'Account Settings', path: '/dashboard/settings', icon: Settings, roles: ['customer', 'admin', 'editor'] },
   ];
 
   const filteredMenu = menuItems.filter(item => profile && (item.roles ? item.roles.includes(profile.role) : true));
@@ -160,13 +160,16 @@ export const DashboardLayout: React.FC = () => {
           <div className="mb-4 px-2">
              <LocalePicker />
           </div>
-          <div className="bg-slate-50 rounded-[10px] p-3 flex items-center gap-3 mb-4">
+          <div className="bg-slate-900 rounded-[10px] p-4 flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-[8px] bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
               {profile?.full_name?.charAt(0) || 'U'}
             </div>
-            <div className="truncate">
-              <p className="text-xs font-bold text-slate-900 truncate">{profile?.full_name}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{profile?.role}</p>
+            <div className="truncate flex-grow">
+              <p className="text-xs font-bold text-white truncate">{profile?.full_name}</p>
+              <div className="flex items-center gap-1">
+                <Shield className={`w-2 h-2 ${profile?.role === 'admin' ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{profile?.role}</p>
+              </div>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-rose-500 hover:bg-rose-50 rounded-[10px] transition font-bold text-xs">
