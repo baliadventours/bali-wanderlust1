@@ -165,111 +165,129 @@ CREATE TABLE public.bookings (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE public.blog_posts (
+CREATE TABLE public.tour_fact_values (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    slug TEXT UNIQUE NOT NULL,
-    title JSONB NOT NULL,
-    excerpt JSONB,
-    content JSONB,
-    featured_image TEXT,
-    category TEXT,
-    is_published BOOLEAN DEFAULT TRUE,
-    author_id UUID REFERENCES public.profiles(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
+    fact_id UUID REFERENCES public.tour_facts(id) ON DELETE CASCADE,
+    value TEXT NOT NULL
 );
 
 -- ==========================================
--- 3. DETERMINISTIC DATA SEEDING (BALI FOCUS)
+-- 3. CLEAN REFERENCE DATA SEEDING
 -- ==========================================
--- Namespace: '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
 
--- A. Reference Data
+-- A. Reference Data (Deterministic valid UUIDs)
 INSERT INTO public.tour_categories (id, name, slug) VALUES
-('c1000000-0000-0000-0000-000000000001', 'Adventure', 'adventure'),
-('c1000000-0000-0000-0000-000000000002', 'Cultural', 'cultural'),
-('c1000000-0000-0000-0000-000000000003', 'Wellness', 'wellness');
+('01000000-0000-0000-0000-000000000001', 'Adventure', 'adventure'),
+('01000000-0000-0000-0000-000000000002', 'Cultural', 'cultural'),
+('01000000-0000-0000-0000-000000000003', 'Wellness', 'wellness');
 
 INSERT INTO public.destinations (id, name, slug) VALUES
-('d1000000-0000-0000-0000-000000000001', '{"en": "Bali"}', 'bali'),
-('d1000000-0000-0000-0000-000000000002', '{"en": "Iceland"}', 'iceland');
+('02000000-0000-0000-0000-000000000001', '{"en": "Bali"}', 'bali');
 
 INSERT INTO public.tour_types (id, name, slug) VALUES
-('71000000-0000-0000-0000-000000000001', '{"en": "Hiking"}', 'hiking'),
-('71000000-0000-0000-0000-000000000002', '{"en": "Water Sports"}', 'water-sports'),
-('71000000-0000-0000-0000-000000000003', '{"en": "Spiritual"}', 'spiritual');
+('03000000-0000-0000-0000-000000000001', '{"en": "Hiking"}', 'hiking'),
+('03000000-0000-0000-0000-000000000002', '{"en": "Water Sports"}', 'water-sports'),
+('03000000-0000-0000-0000-000000000003', '{"en": "Photography"}', 'photography'),
+('03000000-0000-0000-0000-000000000004', '{"en": "Spiritual"}', 'spiritual'),
+('03000000-0000-0000-0000-000000000005', '{"en": "Foodie"}', 'foodie');
 
--- B. 10 High-Quality Bali Tours
+INSERT INTO public.tour_facts (id, name, icon) VALUES
+('04000000-0000-0000-0000-000000000001', 'Duration', 'clock'),
+('04000000-0000-0000-0000-000000000002', 'Group Size', 'users'),
+('04000000-0000-0000-0000-000000000003', 'Language', 'globe');
+
+-- B. 10 Detailed Bali Tours
 DO $$
 DECLARE
     ns UUID := '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
     t_id UUID;
+    cat_adv UUID := '01000000-0000-0000-0000-000000000001';
+    cat_cul UUID := '01000000-0000-0000-0000-000000000002';
+    cat_wel UUID := '01000000-0000-0000-0000-000000000003';
+    dest_bali UUID := '02000000-0000-0000-0000-000000000001';
 BEGIN
-    -- Tour 1: Ubud Jungle
+    -- TOUR 1: Mt Batur (FULL DATASET)
     t_id := uuid_generate_v5(ns, 'tour_bali_1');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Ubud Jungle & Sacred Monkey Forest"}', 'ubud-jungle-highlights', 'c1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "Explore the lush heart of Bali with a visit to the Tegalalang Rice Terrace and the spiritual monkey forest."}', 45.00, 480, 12, 'beginner', ARRAY['https://images.unsplash.com/photo-1554443651-7871b058d867?w=800']);
-    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES (t_id, 1, '{"en": "Monkey Forest Exploration"}', '{"en": "Walk through the sacred forest and meet the local long-tailed macaques."}');
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '2 days', 12, 12);
+    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images, important_info, booking_policy)
+    VALUES (t_id, '{"en": "Mount Batur Active Volcano Sunrise Trek"}', 'mt-batur-sunrise', cat_adv, dest_bali, '03000000-0000-0000-0000-000000000001', 
+    '{"en": "An unforgettable early morning hike to the summit of Mount Batur, an active volcano with breathtaking views. Witness a celestial sunrise above the clouds."}', 65.00, 600, 15, 'intermediate', 
+    ARRAY['https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?w=1200', 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=1200'],
+    '{"en": "Bring a warm jacket as it is cold at the summit. Minimum age 12 years old recommended."}',
+    '{"en": "Full refund if weather conditions make the trek unsafe as determined by our guides."}');
 
-    -- Tour 2: Mt Batur
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "02:00 AM - Pickup"}', '{"en": "Early morning pickup from your accommodation via private transport."}'),
+    (t_id, 2, '{"en": "03:30 AM - Base Camp"}', '{"en": "Safety briefing and distribution of flashlights and hiking sticks."}'),
+    (t_id, 3, '{"en": "06:00 AM - The Summit Reach"}', '{"en": "Reach the peak at 1,717 meters just in time for the sunrise."}'),
+    (t_id, 4, '{"en": "07:30 AM - Volcanic Breakfast"}', '{"en": "Enjoy eggs and bananas cooked by volcanic steam."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Celestial sunrise views over Mt Agung and Mt Rinjani'), 
+    (t_id, 'Breakfast cooked with real volcanic steam'), 
+    (t_id, 'Licensed professional local hiking guides');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Hotel pickup and drop-off', 'include'), 
+    (t_id, 'English speaking guide', 'include'), 
+    (t_id, 'Flashlight and hiking stick', 'include'),
+    (t_id, 'Bottled water and breakfast', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Is it difficult?', 'It is a moderate hike. Most people with basic fitness can complete it in 2 hours.'),
+    (t_id, 'Will I see lava?', 'No, Mt Batur is active but there are no visible lava flows currently.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '3 days', 15, 15);
+
+    -- TOUR 2: Ubud Jungle
     t_id := uuid_generate_v5(ns, 'tour_bali_2');
     INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Mount Batur Active Volcano Sunrise Trek"}', 'mt-batur-sunrise', 'c1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', '{"en": "Hike to the summit of an active volcano in the early hours to witness the most spectacular sunrise in Bali."}', 65.00, 600, 15, 'intermediate', ARRAY['https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?w=800']);
-    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES (t_id, 1, '{"en": "The Summit Reach"}', '{"en": "Reach the peak just as the sky begins to turn orange."}');
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '3 days', 15, 15);
+    VALUES (t_id, '{"en": "Ubud Jungle & Sacred Monkey Forest"}', 'ubud-jungle-highlights', cat_cul, dest_bali, '03000000-0000-0000-0000-000000000004', 
+    '{"en": "Explore the lush heart of Bali with visits to the Tegalalang Rice Terrace and the spiritual monkey forest."}', 45.00, 480, 10, 'beginner', 
+    ARRAY['https://images.unsplash.com/photo-1554443651-7871b058d867?w=1200']);
 
-    -- Tour 3: Nusa Penida
+    -- TOUR 3: Nusa Penida
     t_id := uuid_generate_v5(ns, 'tour_bali_3');
     INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Nusa Penida: Kelingking & Crystal Bay"}', 'nusa-penida-best', 'c1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000002', '{"en": "The ultimate day trip to the most famous coastline in the world featuring Kelingking Cliff."}', 85.00, 720, 8, 'intermediate', ARRAY['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '4 days', 8, 8);
+    VALUES (t_id, '{"en": "Nusa Penida: Kelingking & Crystal Bay"}', 'nusa-penida-best', cat_adv, dest_bali, '03000000-0000-0000-0000-000000000003', 
+    '{"en": "Journey across the sea to see Balis most iconic coastline."}', 85.00, 720, 8, 'intermediate', 
+    ARRAY['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1200']);
 
-    -- Tour 4: Uluwatu
+    -- TOUR 4: Uluwatu
     t_id := uuid_generate_v5(ns, 'tour_bali_4');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Uluwatu Temple Sunset & Fire Dance"}', 'uluwatu-kecak', 'c1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "A dramatic performance on a cliff edge overlooking the Indian Ocean as the sun sets."}', 35.00, 300, 20, 'beginner', ARRAY['https://images.unsplash.com/photo-1558005530-d7c4ec1630aa?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '5 days', 20, 20);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Uluwatu Temple Sunset"}', 'uluwatu-sunset', '{"en": "Dramatic performance on a cliff."}', 35.00, ARRAY['https://images.unsplash.com/photo-1558005530-d7c4ec1630aa?w=800']);
 
-    -- Tour 5: Lempuyang
+    -- TOUR 5: Lempuyang
     t_id := uuid_generate_v5(ns, 'tour_bali_5');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Lempuyang Temple: Gate of Heaven"}', 'gate-of-heaven', 'c1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "Get the iconic photo between the Hindu gates with the mighty Mount Agung in the background."}', 55.00, 600, 10, 'beginner', ARRAY['https://images.unsplash.com/photo-1537953391648-762d01df3c14?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '6 days', 10, 10);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Lempuyang Gate of Heaven"}', 'gate-of-heaven', '{"en": "The iconic photo spot."}', 55.00, ARRAY['https://images.unsplash.com/photo-1537953391648-762d01df3c14?w=800']);
 
-    -- Tour 6: Ayung Rafting
+    -- TOUR 6: Ayung Rafting
     t_id := uuid_generate_v5(ns, 'tour_bali_6');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Ayung River White Water Rafting"}', 'ayung-rafting', 'c1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000002', '{"en": "Paddle through wild rapids and past hidden waterfalls in the Ayung River valley."}', 50.00, 240, 30, 'intermediate', ARRAY['https://images.unsplash.com/photo-1530122622335-d40394391ea5?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '7 days', 30, 30);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Ayung White Water Rafting"}', 'ayung-rafting', '{"en": "Paddle through the wild."}', 50.00, ARRAY['https://images.unsplash.com/photo-1530122622335-d40394391ea5?w=800']);
 
-    -- Tour 7: Spiritual Blessing
+    -- TOUR 7: Spiritual Blessing
     t_id := uuid_generate_v5(ns, 'tour_bali_7');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Spiritual Holy Water Temple Blessing"}', 'tirta-empul-blessing', 'c1000000-0000-0000-0000-000000000003', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "Participate in a traditional purification ritual at Tirta Empul."}', 40.00, 360, 6, 'beginner', ARRAY['https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '8 days', 6, 6);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Spiritual Holy Water Blessing"}', 'tirta-empul', '{"en": "Soul cleansing ritual."}', 40.00, ARRAY['https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800']);
 
-    -- Tour 8: Tanah Lot
+    -- TOUR 8: Tanah Lot
     t_id := uuid_generate_v5(ns, 'tour_bali_8');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Tanah Lot Temple Sunset Expedition"}', 'tanah-lot-sunset', 'c1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "Visit the temple on the sea, one of Balis most iconic spiritual locations."}', 30.00, 300, 15, 'beginner', ARRAY['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '9 days', 15, 15);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Tanah Lot Temple Sunset"}', 'tanah-lot', '{"en": "Iconic sea temple."}', 30.00, ARRAY['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=800']);
 
-    -- Tour 9: Dolphin Watching
+    -- TOUR 9: Dolphin Watching
     t_id := uuid_generate_v5(ns, 'tour_bali_9');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Lovina Dolphin Watching & Snorkeling"}', 'lovina-dolphins', 'c1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000002', '{"en": "A sunrise boat trip to see wild dolphins in their natural habitat."}', 45.00, 480, 12, 'beginner', ARRAY['https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '10 days', 12, 12);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Lovina Dolphin Watching"}', 'lovina-dolphins', '{"en": "Sunrise boat trip."}', 45.00, ARRAY['https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800']);
 
-    -- Tour 10: Cooking Class
+    -- TOUR 10: Cooking Class
     t_id := uuid_generate_v5(ns, 'tour_bali_10');
-    INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
-    VALUES (t_id, '{"en": "Ubud Traditional Cooking Class"}', 'balinese-cooking', 'c1000000-0000-0000-0000-000000000002', 'd1000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000003', '{"en": "Learn the secrets of Balinese spices in a local family compound."}', 45.00, 240, 15, 'beginner', ARRAY['https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800']);
-    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES (t_id, CURRENT_DATE + interval '11 days', 15, 15);
+    INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Balinese Cooking Class"}', 'ubud-cooking', '{"en": "Master Balinese spices."}', 45.00, ARRAY['https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800']);
+
 END $$;
 
 -- C. Administrators
 INSERT INTO public.profiles (id, full_name, email, role, avatar_url) VALUES
-('00000000-0000-0000-0000-000000000001', 'System Admin', 'admin@admin.com', 'admin', 'https://i.pravatar.cc/150?u=admin');
+('00000000-0000-0000-0000-000000000001', 'System Admin', 'admin@admin.com', 'admin', 'https://i.pravatar.cc/150?u=admin')
+ON CONFLICT (id) DO UPDATE SET role = 'admin';
 
 -- D. Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

@@ -10,98 +10,78 @@ export function useTourDetail(slug: string) {
       if (!isConfigured) {
         await new Promise(r => setTimeout(r, 600));
         
-        const baliToursPreview: any[] = [
-          { 
-            slug: 'ubud-jungle-highlights', 
-            title: { en: 'Ubud Jungle & Sacred Monkey Forest' }, 
-            base_price_usd: 45, 
-            images: [
-              'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=1200',
-              'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1530122622335-d40394391ea5?auto=format&fit=crop&q=80&w=600'
+        const tourDataMap: Record<string, Partial<Tour>> = {
+          'mt-batur-sunrise': {
+            title: { en: 'Mount Batur Active Volcano Sunrise Trek' },
+            base_price_usd: 65,
+            duration_minutes: 600,
+            difficulty: 'intermediate',
+            description: { en: 'An unforgettable early morning hike to the summit of Mount Batur, an active volcano with breathtaking views. Witness a celestial sunrise above the clouds.' },
+            images: ['https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?w=1200', 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=1200'],
+            highlights: [
+              'Celestial sunrise views over Mt Agung and Mt Rinjani', 
+              'Breakfast cooked with real volcanic steam', 
+              'Licensed professional local hiking guides'
+            ],
+            itineraries: [
+              { id: 'i1', day_number: 1, title: { en: '02:00 AM - Pickup' }, description: { en: 'Early morning pickup via private transport.' } },
+              { id: 'i2', day_number: 2, title: { en: '03:30 AM - Base Camp' }, description: { en: 'Safety briefing and distribution of gear.' } },
+              { id: 'i3', day_number: 3, title: { en: '06:00 AM - The Summit Reach' }, description: { en: 'Reach the peak just in time for the sunrise.' } }
+            ],
+            inclusions: ['Hotel pickup', 'Licensed guide', 'Breakfast', 'Gear'],
+            availability: [
+              { 
+                id: 's1', 
+                start_time: new Date(Date.now() + 86400000).toISOString(), 
+                end_time: new Date(Date.now() + 86400000 + 14400000).toISOString(),
+                available_spots: 12, 
+                total_spots: 15, 
+                status: 'active' 
+              }
             ]
           },
-          { 
-            slug: 'mt-batur-sunrise', 
-            title: { en: 'Mount Batur Sunrise Trek' }, 
-            base_price_usd: 65, 
-            images: [
-              'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&fit=crop&q=80&w=1200',
-              'https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1537953391648-762d01df3c14?auto=format&fit=crop&q=80&w=600'
+          'ubud-jungle-highlights': {
+            title: { en: 'Ubud Jungle & Sacred Monkey Forest' },
+            base_price_usd: 45,
+            duration_minutes: 480,
+            difficulty: 'beginner',
+            description: { en: 'Explore the lush heart of Bali with a visit to the monkey forest sanctuary.' },
+            images: ['https://images.unsplash.com/photo-1554443651-7871b058d867?w=1200'],
+            highlights: ['Monkey Forest visit', 'Tegalalang Rice Terrace', 'Jungle Walk'],
+            availability: [
+              { 
+                id: 's2', 
+                start_time: new Date(Date.now() + 172800000).toISOString(), 
+                end_time: new Date(Date.now() + 172800000 + 14400000).toISOString(),
+                available_spots: 8, 
+                total_spots: 10, 
+                status: 'active' 
+              }
             ]
-          },
-          { 
-            slug: 'ayung-rafting', 
-            title: { en: 'White Water Rafting Ubud' }, 
-            base_price_usd: 50, 
-            images: [
-              'https://images.unsplash.com/photo-1530122622335-d40394391ea5?auto=format&fit=crop&q=80&w=1200',
-              'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1554443651-7871b058d867?auto=format&fit=crop&q=80&w=600',
-              'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=600'
-            ]
-          },
-        ];
+          }
+        };
 
-        const match = baliToursPreview.find(t => t.slug === slug) || baliToursPreview[0];
+        const match = tourDataMap[slug] || tourDataMap['mt-batur-sunrise'];
 
         const dummyTour: Tour = {
-          id: `dummy-${match.slug}`,
-          slug: match.slug,
-          title: match.title,
-          description: { 
-            en: `Experience the thrill of ${match.title.en}. This adventure takes you through Bali's lush landscapes, offering breathtaking views and unforgettable moments. Perfect for families, solo travelers, and thrill-seekers alike. Our professional guides ensure your safety while you soak in the natural beauty of the island.`
-          },
-          base_price_usd: match.base_price_usd,
-          duration_minutes: 360,
+          id: `dummy-${slug}`,
+          slug: slug,
+          title: match.title || { en: 'Untitled Adventure' },
+          description: match.description || { en: 'No description available.' },
+          base_price_usd: match.base_price_usd || 0,
+          duration_minutes: match.duration_minutes || 0,
           max_participants: 12,
-          difficulty: 'beginner',
-          images: match.images,
+          difficulty: (match.difficulty as any) || 'beginner',
+          images: match.images || [],
           status: 'published',
           is_published: true,
-          category_id: 'cat-1',
-          destination_id: 'dest-1',
-          tour_type_id: 'type-1',
           avg_rating: 4.8,
           review_count: 109,
-          destination: { id: 'ubud-bali', slug: 'ubud-bali', name: { en: 'Ubud, Bali' } },
-          highlights: [
-            'Have a safe time rafting with the help of a trained guide.',
-            'Take advantage of the free lunch spread.',
-            'Get round-trip transfers from your Ubud hotel to make things easier for you.',
-            'You will have access to changing rooms with towels and toiletries.'
-          ],
-          inclusions: [
-            'Safety-approved Rafting equipment',
-            'Professional River Guide',
-            'Meal (Lunch Box)',
-            'All Fees and Taxes',
-            'Insurance Coverage',
-            'Shampoo, bath soap, Towel, Locker, shower, and changing room'
-          ],
-          exclusions: [
-            'Souvenir photos (available to purchase)',
-            'Soft Drink'
-          ],
-          itineraries: [
-            { id: 'i1', day_number: 1, title: { en: 'Arrival & Safety Briefing' }, description: { en: 'Arrive at the starting point, receive your equipment, and get a thorough safety briefing from our expert guides.' } },
-            { id: 'i2', day_number: 2, title: { en: 'The Adventure Begins' }, description: { en: 'Set off on the river or trail for 2-3 hours of action-packed exploration.' } },
-            { id: 'i3', day_number: 3, title: { en: 'Lunch & Relax' }, description: { en: 'Enjoy a delicious local buffet lunch while overlooking the jungle valley before heading back.' } }
-          ],
-          availability: [
-            { id: 's1', start_time: '2025-07-15T08:00:00Z', end_time: '2025-07-15T17:00:00Z', available_spots: 8, total_spots: 12, status: 'active' },
-            { id: 's2', start_time: '2025-08-01T08:00:00Z', end_time: '2025-08-01T17:00:00Z', available_spots: 4, total_spots: 12, status: 'active' }
-          ],
-          addons: [
-            { id: 'a1', title: { en: 'Private Photographer' }, unit_price_usd: 120 },
-            { id: 'a2', title: { en: 'VIP Lounge Access' }, unit_price_usd: 45 }
-          ]
+          destination: { id: 'bali', slug: 'bali', name: { en: 'Bali' } },
+          highlights: match.highlights || [],
+          inclusions: match.inclusions || ['Safety equipment', 'Guide'],
+          itineraries: match.itineraries || [],
+          availability: match.availability || []
         };
         return dummyTour;
       }
@@ -110,26 +90,17 @@ export function useTourDetail(slug: string) {
         .from('tours')
         .select(`
           *,
-          category:tour_categories(name),
           destination:destinations(name),
-          tour_type:tour_types(name),
           itineraries:tour_itineraries(*),
           availability:tour_availability(*),
-          pricing_packages:tour_pricing_packages(*),
-          addons:tour_addons(*),
           highlights:tour_highlights(*),
           inclusions:tour_inclusions(*),
-          faqs:tour_faq(*),
-          reviews:tour_reviews(*),
-          facts:tour_fact_values(value, fact:tour_facts(*))
+          faqs:tour_faq(*)
         `)
         .eq('slug', slug)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching tour detail:", error);
-        return null;
-      }
+      if (error) return null;
       return data as Tour;
     },
     enabled: !!slug,
