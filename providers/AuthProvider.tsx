@@ -14,6 +14,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const initAuth = async () => {
+      // Check if we have a demo admin session in local storage
+      const state = useAuthStore.getState();
+      if (state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001') {
+        setLoading(false);
+        return; // Keep the demo session
+      }
+
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -46,6 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const state = useAuthStore.getState();
+      if (state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001') {
+        return; // Ignore supabase auth changes for demo admin
+      }
+
       if (session?.user) {
         try {
           const { data: profile } = await supabase

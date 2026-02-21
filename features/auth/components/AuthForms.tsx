@@ -21,19 +21,20 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
+    // Always allow demo admin login, even if Supabase is configured
+    if (email.trim() === 'admin@admin.com' && password === 'password') {
+      setTimeout(() => {
+        setAuth(
+          { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
+          { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
+        );
+        navigate('/admin');
+        setLoading(false);
+      }, 600);
+      return;
+    }
+
     if (!isConfigured) {
-      if (email.trim() === 'admin@admin.com' && password === 'password') {
-        setTimeout(() => {
-          setAuth(
-            { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
-            { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
-          );
-          navigate('/admin');
-          setLoading(false);
-        }, 600);
-        return;
-      }
-      
       setError('Invalid demo credentials. Use admin@admin.com / password');
       setLoading(false);
       return;
@@ -55,17 +56,15 @@ export const LoginForm: React.FC = () => {
   const handleDemoAdmin = () => {
     setEmail('admin@admin.com');
     setPassword('password');
-    if (!isConfigured) {
-      setLoading(true);
-      setTimeout(() => {
-        setAuth(
-          { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
-          { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
-        );
-        navigate('/admin');
-        setLoading(false);
-      }, 400);
-    }
+    setLoading(true);
+    setTimeout(() => {
+      setAuth(
+        { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
+        { id: '00000000-0000-0000-0000-000000000001', full_name: 'System Admin', role: 'admin' }
+      );
+      navigate('/admin');
+      setLoading(false);
+    }, 400);
   };
 
   return (
@@ -133,15 +132,14 @@ export const LoginForm: React.FC = () => {
             <p>Admin privileges are automatically synced for admin@admin.com.</p>
           </div>
         </div>
-        {!isConfigured && (
-          <button 
-            onClick={handleDemoAdmin}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Quick Sign-In (Demo Admin)
-          </button>
-        )}
+        <button 
+          type="button"
+          onClick={handleDemoAdmin}
+          className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 rounded-[10px] font-bold text-sm hover:bg-emerald-700 transition-all border border-emerald-500/10 shadow-lg shadow-emerald-100"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Quick Sign-In (Demo Admin)
+        </button>
       </div>
       
       <p className="mt-8 text-center text-xs text-slate-400 font-bold">
