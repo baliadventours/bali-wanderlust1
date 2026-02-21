@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { uploadToImgBB } from "@/lib/imgbb"
+import { uploadToImgBB } from "../../../lib/imgbb"
 import { useTourForm } from "../hooks/useTourForm"
 import { useTourMutation } from "../hooks/useTourMutation"
 
