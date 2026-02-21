@@ -143,3 +143,23 @@ export function useCloneTour() {
     }
   });
 }
+const { data: newTour } = await supabase
+  .from("tours")
+  .insert([tourData])
+  .select()
+  .single()
+
+for (const pkg of packages) {
+  const { data: newPackage } = await supabase
+    .from("tour_packages")
+    .insert([{ ...pkg, tour_id: newTour.id }])
+    .select()
+    .single()
+
+  const tiers = pkg.pricing_tiers.map(t => ({
+    ...t,
+    package_id: newPackage.id
+  }))
+
+  await supabase.from("package_pricing_tiers").insert(tiers)
+}
