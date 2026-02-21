@@ -506,3 +506,10 @@ export const TourEditor: React.FC = () => {
     </FormProvider>
   );
 };
+<input name="price" />
+{
+  name: "",
+  pricing_tiers: [
+    { min_pax: 1, max_pax: 2, price_per_person: 100 }
+  ]
+}
