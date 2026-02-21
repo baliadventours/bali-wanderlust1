@@ -1,125 +1,126 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { uploadToImgBB } from "../../../lib/imgbb"
-import { useTourForm } from "../hooks/useTourForm"
-import { useTourMutation } from "../hooks/useTourMutation"
+import { supabase } from "../../../lib/supabase"
 
-export default function TourEditor() {
-  const { form, setForm } = useTourForm()
-  const { saveTour } = useTourMutation()
+interface Props {
+  existingTour?: any
+}
+
+export default function TourEditor({ existingTour }: Props) {
+  const [form, setForm] = useState<any>({
+    title: "",
+    description: "",
+    image_url: ""
+  })
 
   const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  // ✅ Image Upload Handler (ImgBB)
+  useEffect(() => {
+    if (existingTour && existingTour.id) {
+      setForm(existingTour)
+    }
+  }, [existingTour])
+
   const handleImageUpload = async (file: File) => {
     try {
       setUploading(true)
-      setError(null)
-
       const imageUrl = await uploadToImgBB(file)
 
       setForm(prev => ({
         ...prev,
         image_url: imageUrl
       }))
-    } catch (err: any) {
-      console.error("Image upload failed:", err)
-      setError("Image upload failed. Please try again.")
+    } catch (err) {
+      console.error(err)
+      alert("Image upload failed")
     } finally {
       setUploading(false)
     }
   }
 
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!e.target.files || e.target.files.length === 0) return
-    const file = e.target.files[0]
-    await handleImageUpload(file)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await saveTour(form)
+
+    try {
+      setSaving(true)
+
+      if (form.id) {
+        await supabase
+          .from("tours")
+          .update(form)
+          .eq("id", form.id)
+      } else {
+        await supabase
+          .from("tours")
+          .insert([form])
+      }
+
+      alert("Tour saved successfully")
+    } catch (err) {
+      console.error(err)
+      alert("Save failed")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* Title */}
       <div>
-        <label className="block mb-1 font-medium">Tour Title</label>
+        <label className="block mb-1">Title</label>
         <input
           type="text"
           value={form.title || ""}
           onChange={(e) =>
-            setForm(prev => ({
-              ...prev,
-              title: e.target.value
-            }))
+            setForm(prev => ({ ...prev, title: e.target.value }))
           }
-          className="w-full border rounded px-3 py-2"
+          className="border w-full px-3 py-2 rounded"
         />
       </div>
 
-      {/* Description */}
       <div>
-        <label className="block mb-1 font-medium">Description</label>
+        <label className="block mb-1">Description</label>
         <textarea
           value={form.description || ""}
           onChange={(e) =>
-            setForm(prev => ({
-              ...prev,
-              description: e.target.value
-            }))
+            setForm(prev => ({ ...prev, description: e.target.value }))
           }
-          className="w-full border rounded px-3 py-2"
-          rows={4}
+          className="border w-full px-3 py-2 rounded"
         />
       </div>
 
-      {/* Image Upload */}
       <div>
-        <label className="block mb-1 font-medium">Tour Image</label>
+        <label className="block mb-1">Image</label>
 
         <input
           type="file"
           accept="image/*"
-          onChange={handleFileChange}
+          onChange={(e) => {
+            if (!e.target.files) return
+            handleImageUpload(e.target.files[0])
+          }}
         />
 
-        {uploading && (
-          <p className="text-sm text-gray-500 mt-2">
-            Uploading image...
-          </p>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-500 mt-2">
-            {error}
-          </p>
-        )}
+        {uploading && <p>Uploading...</p>}
 
         {form.image_url && (
-          <div className="mt-3">
-            <img
-              src={form.image_url}
-              alt="Tour preview"
-              className="w-64 rounded shadow"
-            />
-          </div>
+          <img
+            src={form.image_url}
+            alt="Preview"
+            className="w-48 mt-3 rounded"
+          />
         )}
       </div>
 
-      {/* Submit */}
-      <div>
-        <button
-          type="submit"
-          className="bg-black text-white px-4 py-2 rounded"
-        >
-          Save Tour
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={saving}
+        className="bg-black text-white px-4 py-2 rounded"
+      >
+        {saving ? "Saving..." : "Save Tour"}
+      </button>
 
     </form>
   )
