@@ -40,6 +40,8 @@ const UserManagement = lazy(() => import('./features/admin/components/UserManage
 const CategoryManagement = lazy(() => import('./features/admin/components/CategoryManagement').then(m => ({ default: m.CategoryManagement })));
 const DestinationManagement = lazy(() => import('./features/admin/components/DestinationManagement').then(m => ({ default: m.DestinationManagement })));
 const FactManagement = lazy(() => import('./features/admin/components/FactManagement').then(m => ({ default: m.FactManagement })));
+const BlogManagement = lazy(() => import('./features/admin/components/BlogManagement').then(m => ({ default: m.BlogManagement })));
+const BlogEditor = lazy(() => import('./features/admin/components/BlogEditor').then(m => ({ default: m.BlogEditor })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -187,6 +189,9 @@ const App: React.FC = () => {
                   <Route path="/admin/categories" element={<CategoryManagement />} />
                   <Route path="/admin/destinations" element={<DestinationManagement />} />
                   <Route path="/admin/facts" element={<FactManagement />} />
+                  <Route path="/admin/blog" element={<BlogManagement />} />
+                  <Route path="/admin/blog/create" element={<BlogEditor />} />
+                  <Route path="/admin/blog/:id" element={<BlogEditor />} />
                   <Route path="/admin/pricing" element={<div className="p-8">Seasonal Pricing Rules Global Management</div>} />
                 </Route>
               </Route>

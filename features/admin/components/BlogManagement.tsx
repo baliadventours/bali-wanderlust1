@@ -17,9 +17,9 @@ export const BlogManagement: React.FC = () => {
           <h1 className="text-2xl font-black text-slate-900">Travel Journal</h1>
           <p className="text-slate-500 text-sm">Create and publish stories to inspire your travelers.</p>
         </div>
-        <button className="bg-slate-900 text-white px-6 py-3 rounded-[10px] font-bold text-sm hover:bg-emerald-600 transition-all shadow-xl">
-          Write New Story
-        </button>
+        <Link to="/admin/blog/create" className="bg-slate-900 text-white px-6 py-3 rounded-[10px] font-bold text-sm hover:bg-emerald-600 transition-all shadow-xl inline-flex items-center gap-2">
+          <Plus className="w-4 h-4" /> Write New Story
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -42,9 +42,9 @@ export const BlogManagement: React.FC = () => {
               <h3 className="text-md font-bold text-slate-900">{post.title.en}</h3>
             </div>
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
+              <Link to={`/admin/blog/${post.id}`} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
                 <Edit3 className="w-4 h-4" />
-              </button>
+              </Link>
               <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors">
                 <Trash2 className="w-4 h-4" />
               </button>

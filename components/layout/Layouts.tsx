@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe, ListTodo, Shield } from 'lucide-react';
+import { Compass, User, LogOut, LayoutDashboard, Calendar, Map, Settings, Menu, X, ShieldCheck, Users, Tags, Globe, ListTodo, Shield, BookOpen } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { supabase } from '../../lib/supabase';
 import { LocalePicker } from '../shared/LocalePicker';
@@ -124,6 +124,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'My Bookings', path: '/dashboard/bookings', icon: Calendar, roles: ['customer'] },
     { type: 'divider', roles: ['admin', 'editor'] },
     { label: 'Inventory', path: '/admin/tours', icon: Map, roles: ['admin', 'editor'] },
+    { label: 'Journal', path: '/admin/blog', icon: BookOpen, roles: ['admin', 'editor'] },
     { label: 'Hubs', path: '/admin/destinations', icon: Globe, roles: ['admin', 'editor'] },
     { label: 'Taxonomy', path: '/admin/categories', icon: Tags, roles: ['admin', 'editor'] },
     { label: 'Metrics', path: '/admin/facts', icon: ListTodo, roles: ['admin', 'editor'] },
