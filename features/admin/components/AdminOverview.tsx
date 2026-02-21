@@ -4,6 +4,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { DollarSign, Calendar, Users, Package, ArrowUpRight, Clock, UserPlus } from 'lucide-react';
 import { useAdminStats, useAdminBookings, useAdminUsers } from '../hooks/useAdminData';
 import { format } from 'date-fns';
+import { useFormattedPrice } from '../../../utils/currency';
 
 const KPI = ({ title, value, icon: Icon, color }: any) => (
   <div className="bg-white p-6 rounded-[10px] border border-slate-200 shadow-sm">
@@ -24,6 +25,7 @@ export const AdminOverview: React.FC = () => {
   const { data: stats } = useAdminStats();
   const { data: bookings } = useAdminBookings();
   const { data: users } = useAdminUsers();
+  const formatPrice = useFormattedPrice();
 
   return (
     <div className="space-y-8">
@@ -35,7 +37,7 @@ export const AdminOverview: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPI title="Total Revenue" value={`$${stats?.totalRevenue.toLocaleString()}`} icon={DollarSign} color="bg-emerald-50 text-emerald-600" />
+        <KPI title="Total Revenue" value={formatPrice(stats?.totalRevenue || 0)} icon={DollarSign} color="bg-emerald-50 text-emerald-600" />
         <KPI title="Active Bookings" value={stats?.bookingsCount} icon={Calendar} color="bg-indigo-50 text-indigo-600" />
         <KPI title="Live Tours" value={stats?.activeTours} icon={Package} color="bg-amber-50 text-amber-600" />
         <KPI title="Total Travelers" value={users?.length || 0} icon={Users} color="bg-rose-50 text-rose-600" />
@@ -71,7 +73,7 @@ export const AdminOverview: React.FC = () => {
                     <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">{b.customer?.full_name}</p>
                     <p className="text-[10px] text-slate-400 font-medium">{format(new Date(b.created_at), 'MMM d, HH:mm')}</p>
                   </div>
-                  <span className="text-xs font-black text-slate-900">${b.total_amount_usd}</span>
+                  <span className="text-xs font-black text-slate-900">{formatPrice(b.total_amount_usd)}</span>
                 </div>
               ))}
             </div>

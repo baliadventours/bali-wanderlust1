@@ -4,11 +4,13 @@ import { useTours } from '../../tours/hooks/useTours';
 import { Plus, Edit3, Trash2, MapPin, Search, Copy, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCloneTour } from '../hooks/useTourMutation';
+import { useFormattedPrice } from '../../../utils/currency';
 
 export const TourManagement: React.FC = () => {
   const { data: toursData, isLoading } = useTours({});
   const cloneTour = useCloneTour();
   const [search, setSearch] = useState('');
+  const formatPrice = useFormattedPrice();
 
   const getTitle = (title: any) => {
     if (!title) return 'Untitled Tour';
@@ -82,7 +84,7 @@ export const TourManagement: React.FC = () => {
               </div>
               <h3 className="text-md font-bold text-slate-900 mb-4 line-clamp-1">{getTitle(tour.title)}</h3>
               <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                <div className="text-xs font-black text-slate-900">${tour.base_price_usd}</div>
+                <div className="text-xs font-black text-slate-900">{formatPrice(tour.base_price_usd)}</div>
                 <div className="flex gap-1">
                   <button 
                     onClick={() => handleClone(tour.id)}

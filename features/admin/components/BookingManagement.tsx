@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Papa from 'papaparse';
+import { useFormattedPrice } from '../../../utils/currency';
 
 export const BookingManagement: React.FC = () => {
   const { data: bookings, isLoading } = useAdminBookings();
   const updateStatus = useUpdateBookingStatus();
+  const formatPrice = useFormattedPrice();
 
   const handleExport = () => {
     if (!bookings) return;
@@ -96,7 +98,7 @@ export const BookingManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-black text-slate-900">${booking.total_amount_usd}</div>
+                    <div className="text-sm font-black text-slate-900">{formatPrice(booking.total_amount_usd)}</div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${

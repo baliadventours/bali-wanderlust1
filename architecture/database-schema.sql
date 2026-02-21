@@ -240,12 +240,46 @@ BEGIN
     INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
     (t_id, CURRENT_DATE + interval '3 days', 15, 15);
 
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '10 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 15 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
+
     -- TOUR 2: Ubud Jungle
     t_id := uuid_generate_v5(ns, 'tour_bali_2');
     INSERT INTO public.tours (id, title, slug, category_id, destination_id, tour_type_id, description, base_price_usd, duration_minutes, max_participants, difficulty, images)
     VALUES (t_id, '{"en": "Ubud Jungle & Sacred Monkey Forest"}', 'ubud-jungle-highlights', cat_cul, dest_bali, '03000000-0000-0000-0000-000000000004', 
     '{"en": "Explore the lush heart of Bali with visits to the Tegalalang Rice Terrace and the spiritual monkey forest."}', 45.00, 480, 10, 'beginner', 
     ARRAY['https://images.unsplash.com/photo-1554443651-7871b058d867?w=1200']);
+
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "08:00 AM - Hotel Pickup"}', '{"en": "Pickup from your hotel in South Bali or Ubud."}'),
+    (t_id, 2, '{"en": "09:30 AM - Sacred Monkey Forest"}', '{"en": "Explore the sanctuary and interact with the playful macaques."}'),
+    (t_id, 3, '{"en": "11:30 AM - Tegalalang Rice Terrace"}', '{"en": "Walk through the iconic terraced landscapes."}'),
+    (t_id, 4, '{"en": "01:00 PM - Local Lunch"}', '{"en": "Enjoy an authentic Balinese lunch overlooking the jungle."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Interact with hundreds of monkeys in their natural habitat'), 
+    (t_id, 'Walk through the UNESCO-listed Tegalalang Rice Terraces'), 
+    (t_id, 'Learn about Balinese culture and Hinduism');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Hotel pickup and drop-off', 'include'), 
+    (t_id, 'English speaking guide', 'include'), 
+    (t_id, 'Entrance fees to Monkey Forest and Rice Terraces', 'include'),
+    (t_id, 'Lunch', 'exclude');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Are the monkeys aggressive?', 'They can be cheeky. Follow the guides instructions and do not bring loose food or shiny objects.'),
+    (t_id, 'Is there a lot of walking?', 'Yes, expect moderate walking on uneven terrain and stairs.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '2 days', 10, 10);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '8 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 10 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
 
     -- TOUR 3: Nusa Penida
     t_id := uuid_generate_v5(ns, 'tour_bali_3');
@@ -254,33 +288,243 @@ BEGIN
     '{"en": "Journey across the sea to see Balis most iconic coastline."}', 85.00, 720, 8, 'intermediate', 
     ARRAY['https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1200']);
 
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "06:30 AM - Sanur Harbor"}', '{"en": "Meet at the harbor for the fast boat to Nusa Penida."}'),
+    (t_id, 2, '{"en": "08:30 AM - Kelingking Beach"}', '{"en": "Arrive at the famous T-Rex shaped cliff."}'),
+    (t_id, 3, '{"en": "11:00 AM - Angel''s Billabong"}', '{"en": "Visit the natural infinity pool."}'),
+    (t_id, 4, '{"en": "01:00 PM - Crystal Bay"}', '{"en": "Relax, swim, and snorkel in the clear waters."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'See the famous T-Rex cliff at Kelingking Beach'), 
+    (t_id, 'Swim in the crystal clear waters of Crystal Bay'), 
+    (t_id, 'Fast boat ride across the Badung Strait');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Fast boat tickets (return)', 'include'), 
+    (t_id, 'Private car on the island', 'include'), 
+    (t_id, 'Snorkeling equipment', 'include'),
+    (t_id, 'Lunch', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Can we hike down to Kelingking Beach?', 'The hike down is very steep and dangerous. We recommend viewing from the top, but you can hike down at your own risk if time permits.'),
+    (t_id, 'Is the boat ride rough?', 'It can be bumpy depending on the weather. If you get seasick, please take medication beforehand.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '5 days', 8, 8);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '12 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 8 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
+
     -- TOUR 4: Uluwatu
     t_id := uuid_generate_v5(ns, 'tour_bali_4');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Uluwatu Temple Sunset"}', 'uluwatu-sunset', '{"en": "Dramatic performance on a cliff."}', 35.00, ARRAY['https://images.unsplash.com/photo-1558005530-d7c4ec1630aa?w=800']);
+
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "03:30 PM - Hotel Pickup"}', '{"en": "Afternoon pickup to head to the southern peninsula."}'),
+    (t_id, 2, '{"en": "05:00 PM - Uluwatu Temple"}', '{"en": "Explore the ancient temple perched on a 70-meter cliff."}'),
+    (t_id, 3, '{"en": "06:00 PM - Kecak Fire Dance"}', '{"en": "Watch the mesmerizing traditional dance as the sun sets."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Stunning cliffside ocean views'), 
+    (t_id, 'Traditional Kecak Fire Dance performance'), 
+    (t_id, 'Encounter the resident monkeys');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Hotel pickup and drop-off', 'include'), 
+    (t_id, 'Temple entrance fee', 'include'), 
+    (t_id, 'Kecak dance ticket', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'What should I wear?', 'Please wear clothing that covers your knees and shoulders out of respect for the temple. Sarongs are provided if needed.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '1 day', 20, 20);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '5 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 20 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
 
     -- TOUR 5: Lempuyang
     t_id := uuid_generate_v5(ns, 'tour_bali_5');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Lempuyang Gate of Heaven"}', 'gate-of-heaven', '{"en": "The iconic photo spot."}', 55.00, ARRAY['https://images.unsplash.com/photo-1537953391648-762d01df3c14?w=800']);
 
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "05:00 AM - Early Pickup"}', '{"en": "Early start to beat the crowds and get the best light."}'),
+    (t_id, 2, '{"en": "07:30 AM - Gates of Heaven"}', '{"en": "Arrive at Lempuyang Temple and take the iconic photo."}'),
+    (t_id, 3, '{"en": "10:30 AM - Tirta Gangga"}', '{"en": "Visit the beautiful royal water garden."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Iconic photo at the Gates of Heaven with Mt Agung backdrop'), 
+    (t_id, 'Explore the intricate Tirta Gangga water palace');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Private transportation', 'include'), 
+    (t_id, 'All entrance fees', 'include'), 
+    (t_id, 'English speaking driver/guide', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Is there a long wait for the photo?', 'Yes, the queue for the photo can be 1-3 hours depending on the time of day, which is why we start early.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '4 days', 6, 6);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '10 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 6 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
+
     -- TOUR 6: Ayung Rafting
     t_id := uuid_generate_v5(ns, 'tour_bali_6');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Ayung White Water Rafting"}', 'ayung-rafting', '{"en": "Paddle through the wild."}', 50.00, ARRAY['https://images.unsplash.com/photo-1530122622335-d40394391ea5?w=800']);
+
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "08:00 AM - Pickup"}', '{"en": "Transfer to the rafting starting point."}'),
+    (t_id, 2, '{"en": "09:30 AM - Safety Briefing"}', '{"en": "Get equipped and learn the safety commands."}'),
+    (t_id, 3, '{"en": "10:00 AM - Rafting Adventure"}', '{"en": "Navigate the rapids of the Ayung River for 2 hours."}'),
+    (t_id, 4, '{"en": "12:30 PM - Buffet Lunch"}', '{"en": "Enjoy a well-deserved lunch after the activity."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Thrilling class II and III rapids'), 
+    (t_id, 'Stunning jungle scenery and hidden waterfalls'), 
+    (t_id, 'Professional river guides');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Rafting equipment and safety gear', 'include'), 
+    (t_id, 'Buffet lunch', 'include'), 
+    (t_id, 'Insurance coverage', 'include'),
+    (t_id, 'Photos and videos', 'exclude');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Do I need rafting experience?', 'No prior experience is necessary. The rapids are suitable for beginners.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '2 days', 24, 24);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '6 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 24 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
 
     -- TOUR 7: Spiritual Blessing
     t_id := uuid_generate_v5(ns, 'tour_bali_7');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Spiritual Holy Water Blessing"}', 'tirta-empul', '{"en": "Soul cleansing ritual."}', 40.00, ARRAY['https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800']);
 
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "08:30 AM - Pickup"}', '{"en": "Morning pickup to head to Tampaksiring."}'),
+    (t_id, 2, '{"en": "10:00 AM - Tirta Empul Temple"}', '{"en": "Learn about the temple''s history and prepare for the ritual."}'),
+    (t_id, 3, '{"en": "10:30 AM - Melukat Ritual"}', '{"en": "Participate in the traditional purification bathing ritual."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Authentic Balinese purification ritual (Melukat)'), 
+    (t_id, 'Visit the 10th-century Tirta Empul water temple');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Temple entrance fee', 'include'), 
+    (t_id, 'Offerings for the ritual', 'include'), 
+    (t_id, 'Use of traditional sarong', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'What should I bring?', 'Bring a change of clothes and a towel, as you will get fully wet during the ritual.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '6 days', 12, 12);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '4 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 12 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
+
     -- TOUR 8: Tanah Lot
     t_id := uuid_generate_v5(ns, 'tour_bali_8');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Tanah Lot Temple Sunset"}', 'tanah-lot', '{"en": "Iconic sea temple."}', 30.00, ARRAY['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=800']);
+
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "03:00 PM - Pickup"}', '{"en": "Afternoon pickup to head to the west coast."}'),
+    (t_id, 2, '{"en": "04:30 PM - Taman Ayun Temple"}', '{"en": "Optional stop at the beautiful royal family temple."}'),
+    (t_id, 3, '{"en": "05:30 PM - Tanah Lot"}', '{"en": "Arrive at the sea temple and find a spot for sunset."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Spectacular sunset views over the Indian Ocean'), 
+    (t_id, 'See the temple perched on a rock formation in the sea');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Transportation', 'include'), 
+    (t_id, 'Entrance fees', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Can we enter the temple?', 'Non-Hindus cannot enter the main temple grounds, but you can walk around the base at low tide.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '1 day', 15, 15);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '5 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 15 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
 
     -- TOUR 9: Dolphin Watching
     t_id := uuid_generate_v5(ns, 'tour_bali_9');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Lovina Dolphin Watching"}', 'lovina-dolphins', '{"en": "Sunrise boat trip."}', 45.00, ARRAY['https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800']);
 
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "03:00 AM - Early Pickup"}', '{"en": "Very early departure for the drive to North Bali."}'),
+    (t_id, 2, '{"en": "05:30 AM - Boat Departure"}', '{"en": "Board a traditional outrigger boat."}'),
+    (t_id, 3, '{"en": "06:00 AM - Sunrise & Dolphins"}', '{"en": "Watch the sunrise and look for pods of wild dolphins."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Watch wild dolphins in their natural habitat'), 
+    (t_id, 'Beautiful sunrise over the calm northern sea');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Boat rental', 'include'), 
+    (t_id, 'Life jackets', 'include'), 
+    (t_id, 'Breakfast', 'exclude');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Are sightings guaranteed?', 'While sightings are very common (90%+ chance), they are wild animals so we cannot 100% guarantee it.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '3 days', 10, 10);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '6 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 10 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
+
     -- TOUR 10: Cooking Class
     t_id := uuid_generate_v5(ns, 'tour_bali_10');
     INSERT INTO public.tours (id, title, slug, description, base_price_usd, images) VALUES (t_id, '{"en": "Balinese Cooking Class"}', 'ubud-cooking', '{"en": "Master Balinese spices."}', 45.00, ARRAY['https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800']);
+
+    INSERT INTO public.tour_itineraries (tour_id, day_number, title, description) VALUES 
+    (t_id, 1, '{"en": "08:00 AM - Local Market"}', '{"en": "Visit a traditional market to learn about local ingredients."}'),
+    (t_id, 2, '{"en": "09:30 AM - Cooking Prep"}', '{"en": "Arrive at the traditional compound and prepare the spices."}'),
+    (t_id, 3, '{"en": "10:30 AM - Cooking Session"}', '{"en": "Cook 5 traditional Balinese dishes under expert guidance."}'),
+    (t_id, 4, '{"en": "01:00 PM - Lunch"}', '{"en": "Enjoy the feast you have prepared."}');
+
+    INSERT INTO public.tour_highlights (tour_id, content) VALUES 
+    (t_id, 'Learn to make authentic Balinese spice paste (Bumbu)'), 
+    (t_id, 'Cook in a beautiful traditional Balinese family compound'), 
+    (t_id, 'Take home a recipe book');
+
+    INSERT INTO public.tour_inclusions (tour_id, content, type) VALUES 
+    (t_id, 'Market tour', 'include'), 
+    (t_id, 'All ingredients and equipment', 'include'), 
+    (t_id, 'Recipe book', 'include'),
+    (t_id, 'Lunch (what you cooked)', 'include');
+
+    INSERT INTO public.tour_faq (tour_id, question, answer) VALUES 
+    (t_id, 'Do you cater to vegetarians/vegans?', 'Yes, please let us know your dietary requirements when booking.');
+
+    INSERT INTO public.tour_availability (tour_id, start_time, available_spots, total_spots) VALUES 
+    (t_id, CURRENT_DATE + interval '7 days', 12, 12);
+
+    INSERT INTO public.tour_fact_values (tour_id, fact_id, value) VALUES 
+    (t_id, '04000000-0000-0000-0000-000000000001', '6 Hours'),
+    (t_id, '04000000-0000-0000-0000-000000000002', 'Up to 12 People'),
+    (t_id, '04000000-0000-0000-0000-000000000003', 'English');
 
 END $$;
 

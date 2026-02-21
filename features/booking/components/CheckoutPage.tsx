@@ -4,6 +4,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CreditCard, Users, Ticket, ChevronLeft, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { useCheckout } from '../hooks/useCheckout';
 import { format } from 'date-fns';
+import { useAppStore } from '../../../store/useAppStore';
+import { useFormattedPrice } from '../../../utils/currency';
 
 export const CheckoutPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -26,6 +28,9 @@ export const CheckoutPage: React.FC = () => {
     initiateCheckout,
     isLoading
   } = useCheckout(tourId, availabilityId);
+
+  const { currency } = useAppStore();
+  const formatPrice = useFormattedPrice();
 
   if (isLoading) {
     return (
@@ -73,7 +78,7 @@ export const CheckoutPage: React.FC = () => {
       participants,
       addon_ids: selectedAddons,
       coupon_code: appliedDiscount?.code,
-      currency_code: 'USD'
+      currency_code: currency.code
     });
   };
 
@@ -168,7 +173,7 @@ export const CheckoutPage: React.FC = () => {
                         <div className="font-bold text-slate-900">{addon.title?.en}</div>
                         <div className="text-xs text-slate-500">{addon.description?.en || 'Available for this tour'}</div>
                       </div>
-                      <div className="font-extrabold text-indigo-600 text-sm">+${addon.unit_price_usd}</div>
+                      <div className="font-extrabold text-indigo-600 text-sm">+{formatPrice(addon.unit_price_usd)}</div>
                     </button>
                   ))}
                 </div>
@@ -200,23 +205,23 @@ export const CheckoutPage: React.FC = () => {
               <div className="py-6 space-y-4 text-sm">
                 <div className="flex justify-between">
                   <span className="text-white/60">Base Price ({participants.length}x)</span>
-                  <span className="font-medium">${pricing.base.toFixed(2)}</span>
+                  <span className="font-medium">{formatPrice(pricing.base)}</span>
                 </div>
                 {pricing.addons > 0 && (
                   <div className="flex justify-between">
                     <span className="text-white/60">Add-ons Total</span>
-                    <span className="font-medium text-emerald-400">+${pricing.addons.toFixed(2)}</span>
+                    <span className="font-medium text-emerald-400">+{formatPrice(pricing.addons)}</span>
                   </div>
                 )}
                 {pricing.discount > 0 && (
                   <div className="flex justify-between">
                     <span className="text-white/60">Discount Applied</span>
-                    <span className="font-medium text-indigo-400">-${pricing.discount.toFixed(2)}</span>
+                    <span className="font-medium text-indigo-400">-{formatPrice(pricing.discount)}</span>
                   </div>
                 )}
                 <div className="pt-4 flex justify-between items-baseline">
                   <span className="text-lg font-bold">Total Amount</span>
-                  <span className="text-3xl font-extrabold text-indigo-400">${pricing.total.toFixed(2)}</span>
+                  <span className="text-3xl font-extrabold text-indigo-400">{formatPrice(pricing.total)}</span>
                 </div>
               </div>
 
