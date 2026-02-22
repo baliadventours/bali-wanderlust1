@@ -21,8 +21,8 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    // Always allow demo admin login, even if Supabase is configured
-    if (email.trim() === 'admin@admin.com' && password === 'password') {
+    // Allow demo admin login only in preview mode (no Supabase backend)
+    if (!isConfigured && email.trim() === 'admin@admin.com' && password === 'password') {
       setTimeout(() => {
         setAuth(
           { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
@@ -56,6 +56,12 @@ export const LoginForm: React.FC = () => {
   const handleDemoAdmin = () => {
     setEmail('admin@admin.com');
     setPassword('password');
+
+    if (isConfigured) {
+      setError('Demo mode is disabled while Supabase is connected. Please sign in with a real account.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setAuth(

@@ -537,5 +537,8 @@ ON CONFLICT (id) DO UPDATE SET role = 'admin';
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public Read Tours" ON public.tours FOR SELECT USING (true);
+CREATE POLICY "Authenticated Insert Tours" ON public.tours FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Authenticated Update Tours" ON public.tours FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated Delete Tours" ON public.tours FOR DELETE TO authenticated USING (true);
 CREATE POLICY "Public Read Profiles" ON public.profiles FOR SELECT USING (true);
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
