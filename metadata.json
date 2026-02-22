@@ -1,5 +1,5 @@
 {
-  "name": "TourSphere SaaS Architecture",
-  "description": "Comprehensive architectural blueprint for a production-ready, scalable Tour Booking Platform using React, Supabase, and Stripe.",
+  "name": "TourSphere - Premium Tour Booking Platform",
+  "description": "A full-stack tour booking platform featuring a robust RESTful API, PostgreSQL-compatible schema with Prisma, and seamless booking management.",
   "requestFramePermissions": []
 }

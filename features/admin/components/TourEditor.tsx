@@ -44,20 +44,29 @@ const PricingTierEditor = ({ packageIndex, control, register }: any) => {
       <div className="grid grid-cols-1 gap-3">
         {fields.map((tier, tierIdx) => (
           <div key={tier.id} className="flex gap-4 items-center animate-in slide-in-from-left-1">
-            <div className="flex-grow grid grid-cols-2 gap-4">
+            <div className="flex-grow grid grid-cols-3 gap-4">
               <div className="relative">
                 <input 
                   type="number" 
-                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.people`)}
-                  placeholder="Count"
+                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.min_participants`, { valueAsNumber: true })}
+                  placeholder="Min"
                   className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg font-bold text-xs outline-none"
                 />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">QTY</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">MIN</span>
               </div>
               <div className="relative">
                 <input 
                   type="number" 
-                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.price`)}
+                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.max_participants`, { valueAsNumber: true })}
+                  placeholder="Max"
+                  className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg font-bold text-xs outline-none"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">MAX</span>
+              </div>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  {...register(`pricing_packages.${packageIndex}.price_tiers.${tierIdx}.price`, { valueAsNumber: true })}
                   placeholder="Price"
                   className="w-full pl-10 pr-4 py-2 bg-white border rounded-lg font-bold text-xs outline-none text-emerald-600"
                 />
@@ -77,7 +86,7 @@ const PricingTierEditor = ({ packageIndex, control, register }: any) => {
       
       <button 
         type="button" 
-        onClick={() => append({ people: fields.length + 1, price: 0 })}
+        onClick={() => append({ min_participants: 1, max_participants: 2, price: 0 })}
         className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-2"
       >
         <Plus className="w-3 h-3" /> Add Tier
@@ -399,7 +408,7 @@ export const TourEditor: React.FC = () => {
                 
                 <button 
                   type="button" 
-                  onClick={() => appendPricing({ package_name: '', description: '', price_tiers: [{ people: 1, price: 0 }] })} 
+                  onClick={() => appendPricing({ package_name: '', description: '', price_tiers: [{ min_participants: 1, max_participants: 2, price: 0 }] })} 
                   className="w-full py-8 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:bg-emerald-50 hover:text-emerald-600 transition-all flex flex-col items-center justify-center gap-2"
                 >
                   <Plus className="w-6 h-6" />

@@ -1,13 +1,17 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
+import { useAuthStore } from '../../../store/useAuthStore';
 
 export function useTourMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: any) => {
-      if (!isConfigured) {
+      const state = useAuthStore.getState();
+      const isDemoAdmin = state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001';
+
+      if (!isConfigured || isDemoAdmin) {
         await new Promise(r => setTimeout(r, 800));
         return { id: data.id || 'mock-id' };
       }
@@ -75,7 +79,10 @@ export function useCloneTour() {
 
   return useMutation({
     mutationFn: async (tourId: string) => {
-      if (!isConfigured) {
+      const state = useAuthStore.getState();
+      const isDemoAdmin = state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001';
+
+      if (!isConfigured || isDemoAdmin) {
         await new Promise(r => setTimeout(r, 800));
         return { id: 'mock-clone' };
       }

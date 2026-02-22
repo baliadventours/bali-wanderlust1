@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { Tour } from '../../tours/types';
 
 export function useAdminStats() {
@@ -79,7 +80,10 @@ export function useUpdateBookingStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      if (!isConfigured) return { id, status };
+      const state = useAuthStore.getState();
+      const isDemoAdmin = state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001';
+
+      if (!isConfigured || isDemoAdmin) return { id, status };
       const { data, error } = await supabase.from('bookings').update({ status }).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -190,7 +194,10 @@ export function useUpdateUserRole() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
-      if (!isConfigured) return { id, role };
+      const state = useAuthStore.getState();
+      const isDemoAdmin = state.user?.email === 'admin@admin.com' && state.user?.id === '00000000-0000-0000-0000-000000000001';
+
+      if (!isConfigured || isDemoAdmin) return { id, role };
       const { data, error } = await supabase.from('profiles').update({ role }).eq('id', id).select().single();
       if (error) throw error;
       return data;
