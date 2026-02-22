@@ -21,8 +21,8 @@ export const LoginForm: React.FC = () => {
     setLoading(true);
     setError(null);
     
-    // Always allow demo admin login, even if Supabase is configured
-    if (email.trim() === 'admin@admin.com' && password === 'password') {
+    // Allow demo admin login only in preview mode (no Supabase backend)
+    if (!isConfigured && email.trim() === 'admin@admin.com' && password === 'password') {
       setTimeout(() => {
         setAuth(
           { id: '00000000-0000-0000-0000-000000000001', email: 'admin@admin.com' } as any,
@@ -56,6 +56,12 @@ export const LoginForm: React.FC = () => {
   const handleDemoAdmin = () => {
     setEmail('admin@admin.com');
     setPassword('password');
+
+    if (isConfigured) {
+      setError('Demo mode is disabled while Supabase is connected. Please sign in with a real account.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setAuth(
@@ -70,7 +76,7 @@ export const LoginForm: React.FC = () => {
   return (
     <div className="max-w-md w-full mx-auto p-10 bg-white rounded-[10px] border border-slate-200 shadow-2xl">
       <h2 className="text-3xl font-bold text-slate-900 mb-2 font-jakarta">Welcome Back</h2>
-      <p className="text-slate-500 mb-10 text-sm font-medium">Log in to manage your expeditions.</p>
+      <p className="text-slate-500 mb-10 text-sm font-medium">Log in with your Supabase Auth email and password to manage your expeditions.</p>
       
       <form onSubmit={handleLogin} className="space-y-6">
         {error && (
@@ -90,7 +96,7 @@ export const LoginForm: React.FC = () => {
 
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="w-3.5 h-3.5" /> Email Address
+            <Mail className="w-3.5 h-3.5" /> Email (Supabase Auth)
           </label>
           <input 
             type="email" 
@@ -210,7 +216,7 @@ export const RegisterForm: React.FC = () => {
         
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="w-3.5 h-3.5" /> Email Address
+            <Mail className="w-3.5 h-3.5" /> Email (Supabase Auth)
           </label>
           <input 
             type="email" 

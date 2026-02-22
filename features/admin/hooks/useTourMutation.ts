@@ -2,6 +2,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isConfigured } from '../../../lib/supabase';
 
+const ensureAuthenticatedSession = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  if (session) return session;
+
+  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) throw refreshError;
+  if (!refreshed.session) throw new Error('Authentication Required');
+
+  return refreshed.session;
+};
+
 export function useTourMutation() {
   const queryClient = useQueryClient();
 
@@ -12,8 +24,7 @@ export function useTourMutation() {
         return { id: data.id || 'mock-id' };
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Authentication Required");
+      await ensureAuthenticatedSession();
 
       const isNew = !data.id || data.id === 'create';
       const tourPayload = { 
@@ -45,10 +56,13 @@ export function useTourMutation() {
       }
 
       const syncTable = async (table: string, items: any[], mapFn: (item: any) => any) => {
-        await supabase.from(table).delete().eq('tour_id', tourId);
+        const { error: deleteError } = await supabase.from(table).delete().eq('tour_id', tourId);
+        if (deleteError) throw deleteError;
+
         if (items && items.length > 0) {
           const payload = items.map((i, idx) => ({ ...mapFn(i), tour_id: tourId, sort_order: idx }));
-          await supabase.from(table).insert(payload);
+          const { error: insertError } = await supabase.from(table).insert(payload);
+          if (insertError) throw insertError;
         }
       };
 
@@ -80,6 +94,8 @@ export function useCloneTour() {
         return { id: 'mock-clone' };
       }
 
+      await ensureAuthenticatedSession();
+
       // 1. Fetch full original tour data
       const { data: tour, error: fetchError } = await supabase
         .from('tours')
@@ -105,13 +121,22 @@ export function useCloneTour() {
       const { data: newTour, error: insertError } = await supabase
         .from('tours')
         .insert({
-          ...tour,
-          id: undefined,
           title: clonedTitle,
           slug: clonedSlug,
+          category_id: tour.category_id,
+          destination_id: tour.destination_id,
+          tour_type_id: tour.tour_type_id,
+          description: tour.description,
+          important_info: tour.important_info,
+          booking_policy: tour.booking_policy,
+          base_price_usd: tour.base_price_usd,
+          duration_minutes: tour.duration_minutes,
+          max_participants: tour.max_participants,
+          difficulty: tour.difficulty,
+          images: tour.images || [],
           status: 'draft',
-          created_at: undefined,
-          updated_at: undefined
+          is_published: false,
+          updated_at: new Date().toISOString()
         })
         .select('id')
         .single();
@@ -122,8 +147,9 @@ export function useCloneTour() {
       // 3. Duplicate related child records
       const duplicateChild = async (table: string, items: any[]) => {
         if (!items || items.length === 0) return;
-        const payload = items.map(i => ({ ...i, id: undefined, tour_id: newId }));
-        await supabase.from(table).insert(payload);
+        const payload = items.map(({ id, created_at, updated_at, ...row }: any) => ({ ...row, tour_id: newId }));
+        const { error } = await supabase.from(table).insert(payload);
+        if (error) throw error;
       };
 
       await Promise.all([
