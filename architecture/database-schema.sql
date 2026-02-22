@@ -533,6 +533,101 @@ INSERT INTO public.profiles (id, full_name, email, role, avatar_url) VALUES
 ('00000000-0000-0000-0000-000000000001', 'System Admin', 'admin@admin.com', 'admin', 'https://i.pravatar.cc/150?u=admin')
 ON CONFLICT (id) DO UPDATE SET role = 'admin';
 
+-- D. Supabase Auth Admin Bootstrap
+-- Creates a real Supabase Auth user that can sign in with:
+--   email: admin@baliadventours.com
+--   password: password
+DO $$
+DECLARE
+    admin_uid UUID := '11111111-1111-1111-1111-111111111111';
+    admin_email TEXT := 'admin@baliadventours.com';
+    now_ts TIMESTAMPTZ := NOW();
+BEGIN
+    INSERT INTO auth.users (
+        instance_id,
+        id,
+        aud,
+        role,
+        email,
+        encrypted_password,
+        email_confirmed_at,
+        confirmation_sent_at,
+        recovery_sent_at,
+        last_sign_in_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        created_at,
+        updated_at,
+        confirmation_token,
+        email_change,
+        email_change_token_new,
+        recovery_token
+    )
+    VALUES (
+        '00000000-0000-0000-0000-000000000000',
+        admin_uid,
+        'authenticated',
+        'authenticated',
+        admin_email,
+        crypt('password', gen_salt('bf')),
+        now_ts,
+        now_ts,
+        NULL,
+        NULL,
+        '{"provider":"email","providers":["email"]}',
+        '{"full_name":"Bali Admin"}',
+        now_ts,
+        now_ts,
+        '',
+        '',
+        '',
+        ''
+    )
+    ON CONFLICT (id) DO UPDATE
+    SET
+        email = EXCLUDED.email,
+        encrypted_password = EXCLUDED.encrypted_password,
+        raw_app_meta_data = EXCLUDED.raw_app_meta_data,
+        raw_user_meta_data = EXCLUDED.raw_user_meta_data,
+        updated_at = now_ts;
+
+    INSERT INTO auth.identities (
+        id,
+        user_id,
+        identity_data,
+        provider,
+        provider_id,
+        last_sign_in_at,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        uuid_generate_v4(),
+        admin_uid,
+        jsonb_build_object('sub', admin_uid::text, 'email', admin_email),
+        'email',
+        admin_email,
+        NULL,
+        now_ts,
+        now_ts
+    )
+    ON CONFLICT (provider, provider_id) DO UPDATE
+    SET
+        user_id = EXCLUDED.user_id,
+        identity_data = EXCLUDED.identity_data,
+        updated_at = now_ts;
+
+    INSERT INTO public.profiles (id, full_name, email, role, avatar_url)
+    VALUES (admin_uid, 'Bali Admin', admin_email, 'admin', 'https://i.pravatar.cc/150?u=bali-admin')
+    ON CONFLICT (id) DO UPDATE
+    SET
+      full_name = EXCLUDED.full_name,
+      email = EXCLUDED.email,
+      role = 'admin',
+      avatar_url = EXCLUDED.avatar_url,
+      updated_at = now_ts;
+END $$;
+
 -- D. Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
