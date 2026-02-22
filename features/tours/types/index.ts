@@ -139,16 +139,3 @@ export interface TourFilters {
   sortBy?: string;
   page?: number;
 }
-export interface PricingTier {
-  id?: string
-  min_pax: number
-  max_pax: number
-  price_per_person: number
-}
-
-export interface TourPackage {
-  id?: string
-  name: string
-  description?: string
-  pricing_tiers: PricingTier[]
-}

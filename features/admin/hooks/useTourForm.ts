@@ -66,4 +66,3 @@ export const useTourForm = (initialData?: Partial<Tour>) => {
 
   return { form, saveTour };
 };
-const [packages, setPackages] = useState<TourPackage[]>([])
