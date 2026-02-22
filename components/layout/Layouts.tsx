@@ -112,10 +112,12 @@ export const DashboardLayout: React.FC = () => {
   const { profile, signOut } = useAuthStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     signOut();
+    setIsMobileMenuOpen(false);
     navigate('/');
   };
 
@@ -137,6 +139,72 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
+      <div className="md:hidden fixed inset-x-0 top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100 px-4 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 font-bold text-slate-900">
+          <div className="w-7 h-7 bg-emerald-600 rounded-[10px] flex items-center justify-center text-white">
+            <Compass className="w-4 h-4" />
+          </div>
+          <span>TourSphere</span>
+        </Link>
+        <button
+          type="button"
+          aria-label={isMobileMenuOpen ? 'Close sidebar menu' : 'Open sidebar menu'}
+          onClick={() => setIsMobileMenuOpen(prev => !prev)}
+          className="p-2 rounded-[10px] text-slate-600 hover:text-emerald-600 hover:bg-slate-50 transition"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {isMobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar backdrop"
+          className="md:hidden fixed inset-0 bg-slate-900/40 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`md:hidden fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] w-72 max-w-[85vw] bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <nav className="flex-grow px-4 py-4 space-y-1 overflow-y-auto no-scrollbar pb-10">
+          {filteredMenu.map((item, idx) => {
+            if (item.type === 'divider') return <div key={idx} className="h-px bg-slate-100 my-4" />;
+            return (
+              <Link
+                key={item.path}
+                to={item.path!}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-[10px] transition font-bold text-xs"
+              >
+                {item.icon && <item.icon className="w-4 h-4" />}
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-4 border-t border-slate-50 bg-white">
+          <div className="mb-4 px-2">
+            <LocalePicker />
+          </div>
+          <div className="bg-slate-900 rounded-[10px] p-4 flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-[8px] bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
+              {profile?.full_name?.charAt(0) || 'U'}
+            </div>
+            <div className="truncate flex-grow">
+              <p className="text-xs font-bold text-white truncate">{profile?.full_name}</p>
+              <div className="flex items-center gap-1">
+                <Shield className={`w-2 h-2 ${profile?.role === 'admin' ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{profile?.role}</p>
+              </div>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-rose-500 hover:bg-rose-50 rounded-[10px] transition font-bold text-xs">
+            <LogOut className="w-4 h-4" />
+            {t('common.logout')}
+          </button>
+        </div>
+      </aside>
+
       <aside className="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col">
         <div className="p-6">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg text-slate-900">
@@ -179,7 +247,7 @@ export const DashboardLayout: React.FC = () => {
           </button>
         </div>
       </aside>
-      <main className="flex-grow p-8 overflow-y-auto">
+      <main className="flex-grow p-4 pt-24 md:p-8 md:pt-8 overflow-y-auto">
         <Outlet />
       </main>
     </div>
