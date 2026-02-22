@@ -535,12 +535,12 @@ ON CONFLICT (id) DO UPDATE SET role = 'admin';
 
 -- D. Supabase Auth Admin Bootstrap
 -- Creates a real Supabase Auth user that can sign in with:
---   email: admin@baliadventours.com
+--   email: admin@baliwanderlust.com
 --   password: password
 DO $$
 DECLARE
-    admin_uid UUID := '11111111-1111-1111-1111-111111111111';
-    admin_email TEXT := 'admin@baliadventours.com';
+    admin_uid UUID := '6afaaf5c-7446-47b9-952c-07a77ab32bca';
+    admin_email TEXT := 'admin@baliwanderlust.com';
     now_ts TIMESTAMPTZ := NOW();
 BEGIN
     INSERT INTO auth.users (
@@ -551,6 +551,7 @@ BEGIN
         email,
         encrypted_password,
         email_confirmed_at,
+        confirmed_at,
         confirmation_sent_at,
         recovery_sent_at,
         last_sign_in_at,
@@ -570,12 +571,13 @@ BEGIN
         'authenticated',
         admin_email,
         crypt('password', gen_salt('bf')),
-        now_ts,
+        NULL,
+        NULL,
         now_ts,
         NULL,
         NULL,
         '{"provider":"email","providers":["email"]}',
-        '{"full_name":"Bali Admin"}',
+        jsonb_build_object('sub', admin_uid::text, 'email', admin_email, 'full_name', 'Didi', 'email_verified', false, 'phone_verified', false),
         now_ts,
         now_ts,
         '',
@@ -604,7 +606,7 @@ BEGIN
     VALUES (
         uuid_generate_v4(),
         admin_uid,
-        jsonb_build_object('sub', admin_uid::text, 'email', admin_email),
+        jsonb_build_object('sub', admin_uid::text, 'email', admin_email, 'full_name', 'Didi'),
         'email',
         admin_email,
         NULL,
@@ -618,7 +620,7 @@ BEGIN
         updated_at = now_ts;
 
     INSERT INTO public.profiles (id, full_name, email, role, avatar_url)
-    VALUES (admin_uid, 'Bali Admin', admin_email, 'admin', 'https://i.pravatar.cc/150?u=bali-admin')
+    VALUES (admin_uid, 'Didi', admin_email, 'admin', 'https://i.pravatar.cc/150?u=bali-wanderlust-admin')
     ON CONFLICT (id) DO UPDATE
     SET
       full_name = EXCLUDED.full_name,
