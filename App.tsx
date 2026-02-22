@@ -33,8 +33,8 @@ const SettingsPage = lazy(() => import('./features/customer/components/SettingsP
 
 // Lazy Loaded Admin
 const AdminOverview = lazy(() => import('./features/admin/components/AdminOverview').then(m => ({ default: m.AdminOverview })));
-const TourManagement = lazy(() => import('./features/admin/components/TourManagement').then(m => ({ default: m.TourManagement })));
-const TourEditor = lazy(() => import('./features/admin/components/TourEditor').then(m => ({ default: m.TourEditor })));
+const TourManagement = lazy(() => import('./features/admin/components/TourManagement'));
+const TourEditor = lazy(() => import('./features/admin/components/TourEditor'));
 const BookingManagement = lazy(() => import('./features/admin/components/BookingManagement').then(m => ({ default: m.BookingManagement })));
 const UserManagement = lazy(() => import('./features/admin/components/UserManagement').then(m => ({ default: m.UserManagement })));
 const CategoryManagement = lazy(() => import('./features/admin/components/CategoryManagement').then(m => ({ default: m.CategoryManagement })));
