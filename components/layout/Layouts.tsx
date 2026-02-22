@@ -112,10 +112,12 @@ export const DashboardLayout: React.FC = () => {
   const { profile, signOut } = useAuthStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     signOut();
+    setIsMobileMenuOpen(false);
     navigate('/');
   };
 
@@ -135,6 +137,25 @@ export const DashboardLayout: React.FC = () => {
 
   const filteredMenu = menuItems.filter(item => profile && (item.roles ? item.roles.includes(profile.role) : true));
 
+  const renderMenuLinks = () => (
+    <>
+      {filteredMenu.map((item, idx) => {
+        if (item.type === 'divider') return <div key={idx} className="h-px bg-slate-100 my-4" />;
+        return (
+          <Link
+            key={item.path}
+            to={item.path!}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-[10px] transition font-bold text-xs"
+          >
+            {item.icon && <item.icon className="w-4 h-4" />}
+            {item.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <aside className="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col">
@@ -147,15 +168,7 @@ export const DashboardLayout: React.FC = () => {
           </Link>
         </div>
         <nav className="flex-grow px-4 space-y-1 overflow-y-auto no-scrollbar pb-10">
-          {filteredMenu.map((item, idx) => {
-            if (item.type === 'divider') return <div key={idx} className="h-px bg-slate-100 my-4" />;
-            return (
-              <Link key={item.path} to={item.path!} className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 rounded-[10px] transition font-bold text-xs">
-                {item.icon && <item.icon className="w-4 h-4" />}
-                {item.label}
-              </Link>
-            );
-          })}
+          {renderMenuLinks()}
         </nav>
         <div className="p-4 border-t border-slate-50">
           <div className="mb-4 px-2">
@@ -179,9 +192,51 @@ export const DashboardLayout: React.FC = () => {
           </button>
         </div>
       </aside>
-      <main className="flex-grow p-8 overflow-y-auto">
+      <div className="flex-grow flex flex-col min-w-0">
+        <div className="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100 px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 font-bold text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="w-7 h-7 bg-emerald-600 rounded-[10px] flex items-center justify-center text-white">
+              <Compass className="w-4 h-4" />
+            </div>
+            <span>TourSphere</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className="p-2 rounded-[10px] text-slate-600 hover:bg-slate-100"
+            aria-label="Toggle sidebar menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {isMobileMenuOpen && <div className="md:hidden fixed inset-0 bg-black/20 z-40" onClick={() => setIsMobileMenuOpen(false)} />}
+
+        <aside className={`md:hidden fixed top-0 left-0 h-full w-72 max-w-[85vw] bg-white border-r border-slate-100 z-50 transform transition-transform duration-200 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <span className="font-bold text-slate-900">Menu</span>
+            <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-[10px] text-slate-600 hover:bg-slate-100" aria-label="Close sidebar menu">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <nav className="p-4 space-y-1 overflow-y-auto">
+            {renderMenuLinks()}
+          </nav>
+          <div className="p-4 border-t border-slate-50">
+            <div className="mb-4 px-2">
+              <LocalePicker />
+            </div>
+            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-3 px-4 py-2 text-rose-500 hover:bg-rose-50 rounded-[10px] transition font-bold text-xs">
+              <LogOut className="w-4 h-4" />
+              {t('common.logout')}
+            </button>
+          </div>
+        </aside>
+
+      <main className="flex-grow p-4 md:p-8 overflow-y-auto">
         <Outlet />
       </main>
+      </div>
     </div>
   );
 };

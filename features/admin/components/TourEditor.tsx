@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { uploadToImgBB } from "../../../lib/imgbb"
-import { supabase } from "../../../lib/supabase"
+import { supabase, isConfigured } from "../../../lib/supabase"
 
 interface Props {
   existingTour?: any
@@ -44,6 +44,11 @@ export default function TourEditor({ existingTour }: Props) {
 
     try {
       setSaving(true)
+
+      if (!isConfigured) {
+        alert("Supabase is not configured. Save is disabled in preview mode.")
+        return
+      }
 
       if (form.id) {
         await supabase
@@ -116,8 +121,8 @@ export default function TourEditor({ existingTour }: Props) {
 
       <button
         type="submit"
-        disabled={saving}
-        className="bg-black text-white px-4 py-2 rounded"
+        disabled={saving || !isConfigured}
+        className="bg-black text-white px-4 py-2 rounded disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {saving ? "Saving..." : "Save Tour"}
       </button>

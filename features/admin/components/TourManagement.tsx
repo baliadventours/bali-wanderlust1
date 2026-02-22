@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { supabase } from "../../../lib/supabase"
+import { supabase, isConfigured } from "../../../lib/supabase"
 import TourEditor from "./TourEditor"
 
 interface Tour {
@@ -23,6 +23,11 @@ export default function TourManagement() {
     try {
       setLoading(true)
       setError(null)
+
+      if (!isConfigured) {
+        setTours([])
+        return
+      }
 
       const { data, error } = await supabase
         .from("tours")
@@ -83,6 +88,12 @@ export default function TourManagement() {
   return (
     <div className="p-6">
       <h1 className="text-xl font-semibold mb-4">Tour Inventory</h1>
+
+      {!isConfigured && (
+        <p className="mb-4 text-sm text-slate-500">
+          Supabase is not configured in this environment. Inventory is shown in preview mode.
+        </p>
+      )}
 
       <button
         onClick={() => setSelectedTour({} as Tour)}
