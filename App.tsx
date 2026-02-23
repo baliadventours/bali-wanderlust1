@@ -7,10 +7,10 @@ import { AuthProvider } from './providers/AuthProvider';
 import { PublicLayout, DashboardLayout } from './components/layout/Layouts';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Loader2, ArrowRight } from 'lucide-react';
-import { useTours } from './features/tours/hooks/useTours';
-import { useBlog } from './features/blog/hooks/useBlog';
-import { TourCard } from './features/tours/components/TourCard';
-import { LoginForm, RegisterForm } from './features/auth/components/AuthForms';
+import { useTours } from './src/features/tours/hooks/useTours';
+import { useBlog } from './src/features/blog/hooks/useBlog';
+import { TourCard } from './src/features/tours/components/TourCard';
+import { LoginForm, RegisterForm } from './src/features/auth/components/AuthForms';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,25 +23,25 @@ const queryClient = new QueryClient({
 });
 
 // Lazy Loaded Features
-const TourListingPage = lazy(() => import('./features/tours/components/TourListingPage').then(m => ({ default: m.TourListingPage })));
-const TourDetailPage = lazy(() => import('./features/tours/components/TourDetailPage').then(m => ({ default: m.TourDetailPage })));
-const BlogListingPage = lazy(() => import('./features/blog/components/BlogListingPage').then(m => ({ default: m.BlogListingPage })));
-const CheckoutPage = lazy(() => import('./features/booking/components/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
-const BookingSuccessPage = lazy(() => import('./features/booking/components/BookingSuccessPage').then(m => ({ default: m.BookingSuccessPage })));
-const MyBookings = lazy(() => import('./features/customer/components/MyBookings').then(m => ({ default: m.MyBookings })));
-const SettingsPage = lazy(() => import('./features/customer/components/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const TourListingPage = lazy(() => import('./src/features/tours/components/TourListingPage').then(m => ({ default: m.TourListingPage })));
+const TourDetailPage = lazy(() => import('./src/features/tours/components/TourDetailPage').then(m => ({ default: m.TourDetailPage })));
+const BlogListingPage = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.BlogListingPage })));
+const CheckoutPage = lazy(() => import('./src/features/booking/components/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
+const BookingSuccessPage = lazy(() => import('./src/features/booking/components/BookingSuccessPage').then(m => ({ default: m.BookingSuccessPage })));
+const MyBookings = lazy(() => import('./src/features/customer/components/MyBookings').then(m => ({ default: m.MyBookings })));
+const SettingsPage = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.SettingsPage })));
 
 // Lazy Loaded Admin
-const AdminOverview = lazy(() => import('./features/admin/components/AdminOverview').then(m => ({ default: m.AdminOverview })));
-const TourManagement = lazy(() => import('./features/admin/components/TourManagement').then(m => ({ default: m.TourManagement })));
-const TourEditor = lazy(() => import('./features/admin/components/TourEditor').then(m => ({ default: m.TourEditor })));
-const BookingManagement = lazy(() => import('./features/admin/components/BookingManagement').then(m => ({ default: m.BookingManagement })));
-const UserManagement = lazy(() => import('./features/admin/components/UserManagement').then(m => ({ default: m.UserManagement })));
-const CategoryManagement = lazy(() => import('./features/admin/components/CategoryManagement').then(m => ({ default: m.CategoryManagement })));
-const DestinationManagement = lazy(() => import('./features/admin/components/DestinationManagement').then(m => ({ default: m.DestinationManagement })));
-const FactManagement = lazy(() => import('./features/admin/components/FactManagement').then(m => ({ default: m.FactManagement })));
-const BlogManagement = lazy(() => import('./features/admin/components/BlogManagement').then(m => ({ default: m.BlogManagement })));
-const BlogEditor = lazy(() => import('./features/admin/components/BlogEditor').then(m => ({ default: m.BlogEditor })));
+const AdminOverview = lazy(() => import('./src/features/admin/components/AdminOverview').then(m => ({ default: m.AdminOverview })));
+const TourManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.TourManagement })));
+const TourEditor = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.TourEditor })));
+const BookingManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.BookingManagement })));
+const UserManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.UserManagement })));
+const CategoryManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.CategoryManagement })));
+const DestinationManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.DestinationManagement })));
+const FactManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.FactManagement })));
+const BlogManagement = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.BlogManagement })));
+const BlogEditor = lazy(() => import('./src/features/placeholders').then(m => ({ default: m.BlogEditor })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">

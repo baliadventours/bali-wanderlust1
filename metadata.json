@@ -1,5 +1,5 @@
 {
   "name": "TourSphere - Premium Tour Booking Platform",
-  "description": "A full-stack tour booking platform featuring a robust RESTful API, PostgreSQL-compatible schema with Prisma, and seamless booking management.",
+  "description": "A high-performance tour booking SaaS featuring an Express backend, Prisma ORM with SQLite, and a modern React frontend for seamless expedition management.",
   "requestFramePermissions": []
 }
