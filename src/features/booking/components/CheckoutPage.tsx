@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useTour } from '../../tours/hooks/useTours';
 import { useAuth } from '../../../providers/AuthProvider';
+import { supabase } from '../../../lib/supabase';
+import { getTranslation } from '../../../lib/utils';
 import { Loader2, CreditCard, Shield, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
@@ -19,22 +21,19 @@ export const CheckoutPage: React.FC = () => {
     
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tourId: tour.id,
-          userId: user.id,
-          price: tour.price,
-        }),
+      const { error } = await supabase.from('bookings').insert({
+        tour_id: tour.id,
+        user_id: user.id,
+        price: tour.price,
+        status: 'CONFIRMED',
+        paid: true
       });
       
-      const data = await response.json();
-      if (data.status === 'success') {
-        navigate('/booking/success');
-      }
+      if (error) throw error;
+      navigate('/booking/success');
     } catch (error) {
       console.error('Booking failed:', error);
+      alert('Booking failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -42,6 +41,8 @@ export const CheckoutPage: React.FC = () => {
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
   if (!tour) return <div className="p-20 text-center">Tour not found</div>;
+
+  const firstImage = (Array.isArray(tour.images) ? tour.images[0] : tour.images?.split(',')[0]) || '';
 
   return (
     <div className="bg-slate-50 min-h-screen py-20">
@@ -105,10 +106,10 @@ export const CheckoutPage: React.FC = () => {
               
               <div className="flex gap-4">
                 <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={tour.images.split(',')[0]} className="w-full h-full object-cover" alt="" />
+                  <img src={firstImage} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-900 line-clamp-1">{tour.title}</h4>
+                  <h4 className="font-black text-slate-900 line-clamp-1">{getTranslation(tour.title)}</h4>
                   <p className="text-slate-400 text-sm font-bold">{tour.location}</p>
                   <p className="text-emerald-600 text-sm font-black mt-1">{tour.duration} Days</p>
                 </div>

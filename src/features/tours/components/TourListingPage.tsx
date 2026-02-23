@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useTours } from '../hooks/useTours';
 import { TourCard } from './TourCard';
 import { Loader2, Search, Filter } from 'lucide-react';
+import { getTranslation } from '../../../lib/utils';
 
 export const TourListingPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const { data: toursData, isLoading } = useTours({});
 
   const filteredTours = toursData?.data?.tours?.filter((tour: any) => 
-    tour.title.toLowerCase().includes(search.toLowerCase()) ||
+    getTranslation(tour.title).toLowerCase().includes(search.toLowerCase()) ||
     tour.location.toLowerCase().includes(search.toLowerCase())
   );
 

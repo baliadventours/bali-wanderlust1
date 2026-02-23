@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+/* Global Radius Overrides to 10px as per index.html style tag but using tailwind if possible */
+/* However, the user request specifically asked for clean modern UI. I'll stick to standard tailwind for now or the requested 10px if I can. */
+/* The index.html already has a style tag for this, so I'll leave it there. */

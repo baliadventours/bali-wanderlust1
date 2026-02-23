@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-interface User {
+interface Profile {
   id: string;
   email: string;
   name?: string;
@@ -8,62 +10,69 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: Profile | null;
   loading: boolean;
-  login: (email: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Check active sessions and subscribe to auth changes
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await fetchProfile(session.user);
+      }
+      setLoading(false);
+    };
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await fetchProfile(session.user);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string) => {
-    try {
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      const users = data.data.users;
-      const foundUser = users.find((u: any) => u.email === email);
+  const fetchProfile = async (supabaseUser: SupabaseUser) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
 
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem('user', JSON.stringify(foundUser));
-      } else {
-        // Create user if not found (for demo purposes)
-        const createResponse = await fetch('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name: email.split('@')[0] }),
-        });
-        const newData = await createResponse.json();
-        if (newData.status === 'success') {
-          setUser(newData.data.user);
-          localStorage.setItem('user', JSON.stringify(newData.data.user));
-        }
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
+    if (error) {
+      console.error('Error fetching profile:', error);
+      // If profile doesn't exist, we might want to create it or handle it
+      // For now, just set basic info
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
+        role: 'USER'
+      });
+    } else {
+      setUser(data);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

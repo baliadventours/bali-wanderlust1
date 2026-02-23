@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTour } from '../../tours/hooks/useTours';
 import { Loader2, MapPin, Clock, Users, Star, ArrowLeft, Calendar, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { getTranslation } from '../../../lib/utils';
 
 export const TourDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,19 +29,19 @@ export const TourDetailPage: React.FC = () => {
     );
   }
 
-  const images = tour.images.split(',');
-  const startDates = tour.startDates.split(',');
+  const images = Array.isArray(tour.images) ? tour.images : tour.images?.split(',') || [];
+  const startDates = Array.isArray(tour.start_dates) ? tour.start_dates : tour.start_dates?.split(',') || [];
 
   return (
     <div className="bg-white pb-20">
       {/* Hero Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-2 h-[60vh] gap-2 p-2">
         <div className="h-full rounded-2xl overflow-hidden">
-          <img src={images[0] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=1200'} className="w-full h-full object-cover" alt={tour.title} />
+          <img src={images[0] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=1200'} className="w-full h-full object-cover" alt={getTranslation(tour.title)} />
         </div>
         <div className="hidden md:grid grid-rows-2 gap-2 h-full">
           <div className="rounded-2xl overflow-hidden">
-            <img src={images[1] || 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=800'} className="w-full h-full object-cover" alt={tour.title} />
+            <img src={images[1] || 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=800'} className="w-full h-full object-cover" alt={getTranslation(tour.title)} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-2xl overflow-hidden">
@@ -61,11 +62,11 @@ export const TourDetailPage: React.FC = () => {
               <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest">{tour.difficulty}</span>
               <div className="flex items-center gap-1 text-amber-500">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="text-sm font-black">{tour.ratingsAverage}</span>
-                <span className="text-slate-400 text-xs font-bold">({tour.ratingsQuantity} reviews)</span>
+                <span className="text-sm font-black">{tour.ratings_average}</span>
+                <span className="text-slate-400 text-xs font-bold">({tour.ratings_quantity} reviews)</span>
               </div>
             </div>
-            <h1 className="text-5xl font-black text-slate-900 mb-6 leading-tight">{tour.title}</h1>
+            <h1 className="text-5xl font-black text-slate-900 mb-6 leading-tight">{getTranslation(tour.title)}</h1>
             <div className="flex flex-wrap gap-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-emerald-600">
@@ -91,7 +92,7 @@ export const TourDetailPage: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group Size</div>
-                  <div className="font-bold text-slate-900">{tour.maxGroupSize} People</div>
+                  <div className="font-bold text-slate-900">{tour.max_group_size} People</div>
                 </div>
               </div>
             </div>
@@ -100,7 +101,7 @@ export const TourDetailPage: React.FC = () => {
           <div className="prose prose-slate max-w-none">
             <h2 className="text-2xl font-black text-slate-900 mb-4">About this expedition</h2>
             <p className="text-slate-600 text-lg leading-relaxed font-medium">
-              {tour.description}
+              {getTranslation(tour.description)}
             </p>
           </div>
 

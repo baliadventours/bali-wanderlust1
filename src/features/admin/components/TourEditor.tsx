@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save, Loader2, AlertCircle, Image as ImageIcon, Calendar, MapPin, DollarSign, Clock, Users } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { getTranslation, toLocalizedString } from '../../../lib/utils';
 
 export const TourEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,53 +17,65 @@ export const TourEditor: React.FC = () => {
     price: 0,
     duration: 0,
     location: '',
-    maxGroupSize: 10,
+    max_group_size: 10,
     difficulty: 'Easy',
     images: '',
-    startDates: '',
+    start_dates: '',
   });
 
-  const { data: tourData, isLoading: isFetching } = useQuery({
+  const { data: tour, isLoading: isFetching } = useQuery({
     queryKey: ['admin-tour', id],
     queryFn: async () => {
-      const response = await fetch(`/api/tours/${id}`);
-      if (!response.ok) throw new Error('Failed to fetch tour');
-      return response.json();
+      const { data, error } = await supabase
+        .from('tours')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     enabled: isEdit,
   });
 
   useEffect(() => {
-    if (tourData?.data?.tour) {
-      const tour = tourData.data.tour;
+    if (tour) {
       setFormData({
-        title: tour.title,
-        description: tour.description,
+        title: getTranslation(tour.title),
+        description: getTranslation(tour.description),
         price: tour.price,
         duration: tour.duration,
         location: tour.location,
-        maxGroupSize: tour.maxGroupSize,
+        max_group_size: tour.max_group_size,
         difficulty: tour.difficulty,
-        images: tour.images,
-        startDates: tour.startDates,
+        images: Array.isArray(tour.images) ? tour.images.join(', ') : tour.images,
+        start_dates: Array.isArray(tour.start_dates) ? tour.start_dates.join(', ') : tour.start_dates,
       });
     }
-  }, [tourData]);
+  }, [tour]);
 
   const mutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const url = isEdit ? `/api/tours/${id}` : '/api/tours';
-      const method = isEdit ? 'PATCH' : 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error?.message || 'Failed to save tour');
+    mutationFn: async (data: any) => {
+      const payload = {
+        ...data,
+        title: toLocalizedString(data.title),
+        description: toLocalizedString(data.description),
+        images: data.images.split(',').map((s: string) => s.trim()),
+        start_dates: data.start_dates.split(',').map((s: string) => s.trim()),
+      };
+
+      if (isEdit) {
+        const { error } = await supabase
+          .from('tours')
+          .update(payload)
+          .eq('id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('tours')
+          .insert(payload);
+        if (error) throw error;
       }
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tours'] });
@@ -203,9 +217,9 @@ export const TourEditor: React.FC = () => {
                 <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
                 <input 
                   type="number" 
-                  name="maxGroupSize"
+                  name="max_group_size"
                   required
-                  value={formData.maxGroupSize}
+                  value={formData.max_group_size}
                   onChange={handleChange}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 pl-12 pr-4 font-bold focus:outline-none focus:border-emerald-500 transition-all"
                 />
@@ -238,8 +252,8 @@ export const TourEditor: React.FC = () => {
               <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
               <input 
                 type="text" 
-                name="startDates"
-                value={formData.startDates}
+                name="start_dates"
+                value={formData.start_dates}
                 onChange={handleChange}
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 pl-12 pr-4 font-bold focus:outline-none focus:border-emerald-500 transition-all"
                 placeholder="2026-05-15, 2026-06-20"

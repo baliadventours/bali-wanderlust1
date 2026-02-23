@@ -5,6 +5,10 @@
     "module": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -22,6 +26,6 @@
     "esModuleInterop": true,
     "allowJs": true
   },
-  "include": ["src", "server.ts", "prisma.config.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

@@ -2,44 +2,43 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, MapPin, Clock, Users, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../../../lib/supabase';
+import { getTranslation, LocalizedString } from '../../../lib/utils';
 
 interface Tour {
   id: string;
-  title: string;
+  title: LocalizedString;
   price: number;
   duration: number;
   location: string;
-  maxGroupSize: number;
+  max_group_size: number;
   difficulty: string;
-  ratingsAverage: number;
+  ratings_average: number;
 }
 
 export const TourManagement: React.FC = () => {
   const queryClient = useQueryClient();
   
-  const { data: toursData, isLoading, error } = useQuery({
+  const { data: tours, isLoading, error } = useQuery({
     queryKey: ['admin-tours'],
     queryFn: async () => {
-      const response = await fetch('/api/tours');
-      if (!response.ok) throw new Error('Failed to fetch tours');
-      return response.json();
+      const { data, error } = await supabase.from('tours').select('*');
+      if (error) throw error;
+      return data;
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/tours/${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete tour');
-      return response.json();
+      const { error } = await supabase.from('tours').delete().eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tours'] });
     }
   });
 
-  const tours = toursData?.data?.tours || [];
+  const tourList = tours || [];
 
   if (isLoading) {
     return (
@@ -86,10 +85,10 @@ export const TourManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {tours.map((tour: Tour) => (
+              {tourList.map((tour: Tour) => (
                 <tr key={tour.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-6">
-                    <div className="font-black text-slate-900 mb-1">{tour.title}</div>
+                    <div className="font-black text-slate-900 mb-1">{getTranslation(tour.title)}</div>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${
                         tour.difficulty === 'Easy' ? 'bg-emerald-100 text-emerald-700' :
@@ -98,7 +97,7 @@ export const TourManagement: React.FC = () => {
                       }`}>
                         {tour.difficulty}
                       </span>
-                      <span className="text-xs font-bold text-slate-400">Rating: {tour.ratingsAverage}</span>
+                      <span className="text-xs font-bold text-slate-400">Rating: {tour.ratings_average}</span>
                     </div>
                   </td>
                   <td className="px-6 py-6">
@@ -111,7 +110,7 @@ export const TourManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-6">
                     <div className="flex items-center gap-2 text-slate-600 font-bold text-sm">
-                      <Users className="w-4 h-4 text-emerald-600" /> Max {tour.maxGroupSize}
+                      <Users className="w-4 h-4 text-emerald-600" /> Max {tour.max_group_size}
                     </div>
                   </td>
                   <td className="px-6 py-6">
@@ -143,7 +142,7 @@ export const TourManagement: React.FC = () => {
           </table>
         </div>
         
-        {tours.length === 0 && (
+        {tourList.length === 0 && (
           <div className="p-20 text-center">
             <div className="text-slate-300 font-black text-2xl mb-2">No tours found</div>
             <p className="text-slate-400 font-medium mb-8">Start by creating your first expedition.</p>

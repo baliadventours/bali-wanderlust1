@@ -1,17 +1,42 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Compass, Calendar, Users, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { getTranslation } from '../../../lib/utils';
 
 export const AdminOverview: React.FC = () => {
-  const { data: toursData } = useQuery({ queryKey: ['tours'], queryFn: () => fetch('/api/tours').then(res => res.json()) });
-  const { data: bookingsData } = useQuery({ queryKey: ['bookings'], queryFn: () => fetch('/api/bookings').then(res => res.json()) });
-  const { data: usersData } = useQuery({ queryKey: ['users'], queryFn: () => fetch('/api/users').then(res => res.json()) });
+  const { data: tours } = useQuery({ 
+    queryKey: ['tours'], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tours').select('*');
+      if (error) throw error;
+      return data;
+    } 
+  });
+  
+  const { data: bookings } = useQuery({ 
+    queryKey: ['bookings'], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from('bookings').select('*, user:profiles(*), tour:tours(*)');
+      if (error) throw error;
+      return data;
+    } 
+  });
+  
+  const { data: users } = useQuery({ 
+    queryKey: ['users'], 
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (error) throw error;
+      return data;
+    } 
+  });
 
   const stats = [
     { label: 'Total Revenue', val: '$124,500', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: '+12.5%', up: true },
-    { label: 'Active Tours', val: toursData?.results || 0, icon: Compass, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+2', up: true },
-    { label: 'Total Bookings', val: bookingsData?.results || 0, icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+18', up: true },
-    { label: 'Total Users', val: usersData?.results || 0, icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', trend: '-3%', up: false },
+    { label: 'Active Tours', val: tours?.length || 0, icon: Compass, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+2', up: true },
+    { label: 'Total Bookings', val: bookings?.length || 0, icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+18', up: true },
+    { label: 'Total Users', val: users?.length || 0, icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', trend: '-3%', up: false },
   ];
 
   return (
@@ -49,15 +74,15 @@ export const AdminOverview: React.FC = () => {
             <button className="text-emerald-600 font-bold text-sm">View All</button>
           </div>
           <div className="divide-y divide-slate-50">
-            {bookingsData?.data?.bookings?.slice(0, 5).map((b: any) => (
+            {bookings?.slice(0, 5).map((b: any) => (
               <div key={b.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-slate-600">
-                    {b.user.name?.[0] || b.user.email[0]}
+                    {b.user?.name?.[0] || b.user?.email?.[0] || '?'}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900">{b.user.name || b.user.email}</div>
-                    <div className="text-xs font-medium text-slate-400">{b.tour.title}</div>
+                    <div className="font-bold text-slate-900">{b.user?.name || b.user?.email || 'Unknown'}</div>
+                    <div className="text-xs font-medium text-slate-400">{getTranslation(b.tour?.title)}</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -76,12 +101,12 @@ export const AdminOverview: React.FC = () => {
             <button className="text-emerald-600 font-bold text-sm">Manage Tours</button>
           </div>
           <div className="divide-y divide-slate-50">
-            {toursData?.data?.tours?.slice(0, 5).map((t: any) => (
+            {tours?.slice(0, 5).map((t: any) => (
               <div key={t.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <img src={t.images.split(',')[0]} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                  <img src={Array.isArray(t.images) ? t.images[0] : t.images?.split(',')[0]} className="w-12 h-12 rounded-xl object-cover" alt="" />
                   <div>
-                    <div className="font-bold text-slate-900">{t.title}</div>
+                    <div className="font-bold text-slate-900">{getTranslation(t.title)}</div>
                     <div className="text-xs font-medium text-slate-400">{t.location}</div>
                   </div>
                 </div>

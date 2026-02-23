@@ -1,5 +1,5 @@
 {
   "name": "TourSphere - Premium Tour Booking Platform",
-  "description": "A high-performance tour booking SaaS featuring an Express backend, Prisma ORM with SQLite, and a modern React frontend for seamless expedition management.",
+  "description": "A high-performance single-vendor tour booking platform built with Vite, React, and Supabase for seamless expedition management and secure bookings.",
   "requestFramePermissions": []
 }
