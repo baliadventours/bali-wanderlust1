@@ -1,7 +1,10 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
-import { Compass, User, LogOut, Menu, X, LayoutDashboard, Calendar, Settings, Shield } from 'lucide-react';
+import { 
+  Compass, LogOut, Menu, X, LayoutDashboard, Calendar, Settings, Shield, 
+  Package, BookOpen, Globe, Tags, Activity, CreditCard, BarChart3 
+} from 'lucide-react';
 
 export const PublicLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -109,10 +112,15 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   const adminItems = [
-    { icon: Shield, label: 'Admin Panel', path: '/admin' },
-    { icon: Compass, label: 'Manage Tours', path: '/admin/tours' },
-    { icon: Calendar, label: 'All Bookings', path: '/admin/bookings' },
-    { icon: User, label: 'User Management', path: '/admin/users' },
+    { icon: BarChart3, label: 'Intelligence', path: '/admin' },
+    { icon: Package, label: 'Inventory', path: '/admin/tours' },
+    { icon: BookOpen, label: 'Journal', path: '/admin/blog' },
+    { icon: Globe, label: 'Hubs', path: '/admin/destinations' },
+    { icon: Tags, label: 'Taxonomy', path: '/admin/categories' },
+    { icon: Activity, label: 'Metrics', path: '/admin/facts' },
+    { icon: CreditCard, label: 'Transactions', path: '/admin/bookings' },
+    { icon: Shield, label: 'Authorities', path: '/admin/users' },
+    { icon: Settings, label: 'Account Settings', path: '/dashboard/settings' },
   ];
 
   return (
@@ -128,9 +136,21 @@ export const DashboardLayout: React.FC = () => {
           </Link>
         </div>
 
-        <div className="flex-grow p-6 space-y-8 overflow-y-auto">
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2">Menu</h4>
+        <div className="flex-grow p-6 space-y-2 overflow-y-auto">
+          {(user?.role === 'ADMIN' || user?.role === 'EDITOR') ? (
+            <nav className="space-y-1">
+              {adminItems.map(item => (
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-all"
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          ) : (
             <nav className="space-y-1">
               {menuItems.map(item => (
                 <Link 
@@ -143,40 +163,22 @@ export const DashboardLayout: React.FC = () => {
                 </Link>
               ))}
             </nav>
-          </div>
-
-          {(user?.role === 'ADMIN' || user?.role === 'EDITOR') && (
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2">Administration</h4>
-              <nav className="space-y-1">
-                {adminItems.map(item => (
-                  <Link 
-                    key={item.path} 
-                    to={item.path} 
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-all"
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-100">
-          <div className="flex items-center gap-3 mb-6 px-2">
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-black">
+        <div className="p-4 border-t border-slate-100">
+          <div className="bg-slate-900 rounded-2xl p-4 flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black">
               {user?.name?.[0] || user?.email?.[0]}
             </div>
             <div className="flex-grow min-w-0">
-              <div className="font-bold text-slate-900 truncate">{user?.name || 'User'}</div>
-              <div className="text-xs font-medium text-slate-400 truncate">{user?.email}</div>
+              <div className="font-bold text-white truncate">{user?.name || 'System Admin'}</div>
+              <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{user?.role || 'ADMIN'}</div>
             </div>
           </div>
           <button 
             onClick={() => { logout(); navigate('/'); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all"
           >
             <LogOut className="w-5 h-5" />
             Sign Out
