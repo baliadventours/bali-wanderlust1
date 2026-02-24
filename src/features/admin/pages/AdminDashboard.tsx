@@ -2,29 +2,18 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Edit, Loader2, MapPin, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
-import { Tour } from '../../../lib/types';
+import { adminGetTours, deleteTour } from '../api';
 
 const AdminDashboard: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: tours, isLoading } = useQuery({
     queryKey: ['admin-tours'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tours')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Tour[];
-    }
+    queryFn: adminGetTours
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('tours').delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: deleteTour,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tours'] });
     }
@@ -62,7 +51,7 @@ const AdminDashboard: React.FC = () => {
               <tr key={tour.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-8 py-8">
                   <div className="flex items-center gap-4">
-                    <img src={tour.images?.[0]} className="w-16 h-16 rounded-2xl object-cover" alt="" />
+                    <img src={tour.tour_images?.[0]?.url || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=800'} className="w-16 h-16 rounded-2xl object-cover" alt="" />
                     <div>
                       <div className="font-black text-slate-900 text-lg">{tour.title.en}</div>
                       <div className="flex items-center gap-2 text-slate-400 text-sm font-bold">

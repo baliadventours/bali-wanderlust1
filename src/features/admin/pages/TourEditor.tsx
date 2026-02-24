@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import { Tour } from '../../../lib/types';
+import { createTour, updateTour } from '../api';
+import { Tour, TourImage } from '../../../lib/types';
 
 const TourEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,11 +28,11 @@ const TourEditor: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tours')
-        .select('*')
+        .select('*, tour_images(*)')
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data as Tour;
+      return data as (Tour & { tour_images: TourImage[] });
     },
     enabled: isEdit
   });
@@ -46,7 +47,7 @@ const TourEditor: React.FC = () => {
         duration_minutes: tour.duration_minutes,
         max_participants: tour.max_participants,
         difficulty: tour.difficulty,
-        images: tour.images.join(', '),
+        images: tour.tour_images.map(img => img.url).join(', '),
       });
     }
   }, [tour]);
@@ -60,16 +61,15 @@ const TourEditor: React.FC = () => {
         base_price_usd: data.base_price_usd,
         duration_minutes: data.duration_minutes,
         max_participants: data.max_participants,
-        difficulty: data.difficulty,
-        images: data.images.split(',').map(s => s.trim()).filter(Boolean),
+        difficulty: data.difficulty as any,
       };
 
+      const images = data.images.split(',').map(s => s.trim()).filter(Boolean);
+
       if (isEdit) {
-        const { error } = await supabase.from('tours').update(payload).eq('id', id);
-        if (error) throw error;
+        await updateTour(id!, payload);
       } else {
-        const { error } = await supabase.from('tours').insert(payload);
-        if (error) throw error;
+        await createTour(payload, images);
       }
     },
     onSuccess: () => {

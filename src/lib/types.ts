@@ -17,7 +17,15 @@ export type Tour = {
   duration_minutes: number;
   max_participants: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  images: string[];
+  is_active: boolean;
+  created_at: string;
+};
+
+export type TourImage = {
+  id: string;
+  tour_id: string;
+  url: string;
+  is_primary: boolean;
   created_at: string;
 };
 

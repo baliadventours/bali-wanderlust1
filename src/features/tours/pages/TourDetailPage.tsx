@@ -2,24 +2,15 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, Users, Star, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
+import { getTourBySlug } from '../api';
 import Container from '../../../components/Container';
-import { Tour } from '../../../lib/types';
 
 const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
 
   const { data: tour, isLoading } = useQuery({
     queryKey: ['tour', slug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tours')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-      if (error) throw error;
-      return data as Tour;
-    }
+    queryFn: () => getTourBySlug(slug!)
   });
 
   if (isLoading) {
@@ -32,23 +23,26 @@ const TourDetailPage: React.FC = () => {
 
   if (!tour) return <div className="p-20 text-center font-black text-2xl">Tour not found</div>;
 
+  const images = tour.tour_images.map(img => img.url);
+  const primaryImage = images[0] || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=800';
+
   return (
     <div className="bg-white pb-32">
       {/* Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-2 h-[70vh] gap-2 p-2">
         <div className="h-full rounded-3xl overflow-hidden">
-          <img src={tour.images?.[0]} className="w-full h-full object-cover" alt={tour.title.en} />
+          <img src={primaryImage} className="w-full h-full object-cover" alt={tour.title.en} />
         </div>
         <div className="hidden md:grid grid-rows-2 gap-2 h-full">
           <div className="rounded-3xl overflow-hidden">
-            <img src={tour.images?.[1] || tour.images?.[0]} className="w-full h-full object-cover" alt={tour.title.en} />
+            <img src={images[1] || primaryImage} className="w-full h-full object-cover" alt={tour.title.en} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-3xl overflow-hidden">
-              <img src={tour.images?.[2] || tour.images?.[0]} className="w-full h-full object-cover" alt={tour.title.en} />
+              <img src={images[2] || primaryImage} className="w-full h-full object-cover" alt={tour.title.en} />
             </div>
             <div className="rounded-3xl overflow-hidden bg-slate-900 flex items-center justify-center text-white font-black text-2xl">
-              + {Math.max(0, (tour.images?.length || 0) - 3)} Photos
+              + {Math.max(0, images.length - 3)} Photos
             </div>
           </div>
         </div>

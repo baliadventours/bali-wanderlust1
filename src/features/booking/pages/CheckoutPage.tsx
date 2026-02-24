@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import Container from '../../../components/Container';
-import { Tour } from '../../../lib/types';
+import { Tour, TourImage } from '../../../lib/types';
 
 const CheckoutPage: React.FC = () => {
   const { tourId } = useParams<{ tourId: string }>();
@@ -16,11 +16,11 @@ const CheckoutPage: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tours')
-        .select('*')
+        .select('*, tour_images(*)')
         .eq('id', tourId)
         .single();
       if (error) throw error;
-      return data as Tour;
+      return data as (Tour & { tour_images: TourImage[] });
     }
   });
 
@@ -99,7 +99,7 @@ const CheckoutPage: React.FC = () => {
               
               <div className="flex gap-6">
                 <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0">
-                  <img src={tour.images?.[0]} className="w-full h-full object-cover" alt="" />
+                  <img src={tour.tour_images?.[0]?.url || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=800'} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div>
                   <h4 className="font-black text-slate-900 text-lg">{tour.title.en}</h4>

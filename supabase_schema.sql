@@ -1,4 +1,7 @@
 
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- 1. Profiles Table
 CREATE TABLE public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -20,13 +23,21 @@ CREATE TABLE public.tours (
     duration_minutes INT NOT NULL,
     max_participants INT NOT NULL,
     difficulty TEXT DEFAULT 'beginner' CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
-    images TEXT[] DEFAULT '{}',
-    is_published BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Bookings Table
+-- 3. Tour Images Table
+CREATE TABLE public.tour_images (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tour_id UUID REFERENCES public.tours(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    is_primary BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Bookings Table
 CREATE TABLE public.bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -38,24 +49,30 @@ CREATE TABLE public.bookings (
 
 -- RLS POLICIES
 
--- Profiles: Users can read their own profile, Admins can read all
+-- Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Admins can read all profiles" ON public.profiles FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own profile." ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
--- Tours: Public can read published tours, Admins can manage all
+-- Tours
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read published tours" ON public.tours FOR SELECT USING (is_published = true);
-CREATE POLICY "Admins can manage tours" ON public.tours FOR ALL USING (
+CREATE POLICY "Public can read active tours" ON public.tours FOR SELECT USING (is_active = true);
+CREATE POLICY "Admin can manage tours" ON public.tours FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Bookings: Users can read/insert their own bookings, Admins can manage all
+-- Tour Images
+ALTER TABLE public.tour_images ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can read tour images" ON public.tour_images FOR SELECT USING (true);
+CREATE POLICY "Admin can manage tour images" ON public.tour_images FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- Bookings
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read own bookings" ON public.bookings FOR SELECT USING (auth.uid() = customer_id);
 CREATE POLICY "Users can insert own bookings" ON public.bookings FOR INSERT WITH CHECK (auth.uid() = customer_id);
-CREATE POLICY "Admins can manage bookings" ON public.bookings FOR ALL USING (
+CREATE POLICY "Admin can manage bookings" ON public.bookings FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
