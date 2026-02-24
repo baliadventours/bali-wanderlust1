@@ -7,7 +7,10 @@ export const adminGetTours = async () => {
     .select('*, tour_images(*)')
     .order('created_at', { ascending: false });
   
-  if (error) throw error;
+  if (error) {
+    console.error('Admin error fetching tours:', error);
+    throw error;
+  }
   return data;
 };
 
@@ -18,7 +21,10 @@ export const createTour = async (tourData: Partial<Tour>, images: string[]) => {
     .select()
     .single();
   
-  if (tourError) throw tourError;
+  if (tourError) {
+    console.error('Admin error creating tour:', tourError);
+    throw tourError;
+  }
 
   if (images.length > 0) {
     const imagePayload = images.map((url, index) => ({
@@ -27,7 +33,10 @@ export const createTour = async (tourData: Partial<Tour>, images: string[]) => {
       is_primary: index === 0
     }));
     const { error: imgError } = await supabase.from('tour_images').insert(imagePayload);
-    if (imgError) throw imgError;
+    if (imgError) {
+      console.error('Admin error inserting tour images:', imgError);
+      throw imgError;
+    }
   }
 
   return tour;
@@ -41,11 +50,17 @@ export const updateTour = async (id: string, tourData: Partial<Tour>) => {
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Admin error updating tour:', error);
+    throw error;
+  }
   return data;
 };
 
 export const deleteTour = async (id: string) => {
   const { error } = await supabase.from('tours').delete().eq('id', id);
-  if (error) throw error;
+  if (error) {
+    console.error('Admin error deleting tour:', error);
+    throw error;
+  }
 };

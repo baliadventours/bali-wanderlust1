@@ -7,7 +7,10 @@ export const getTours = async () => {
     .select('*, tour_images(*)')
     .eq('is_active', true);
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching tours:', error);
+    throw error;
+  }
   return data as (Tour & { tour_images: TourImage[] })[];
 };
 
@@ -18,6 +21,9 @@ export const getTourBySlug = async (slug: string) => {
     .eq('slug', slug)
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching tour by slug:', error);
+    throw error;
+  }
   return data as (Tour & { tour_images: TourImage[] });
 };

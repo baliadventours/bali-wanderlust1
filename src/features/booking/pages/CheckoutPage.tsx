@@ -27,10 +27,9 @@ const CheckoutPage: React.FC = () => {
   const handleBooking = async () => {
     setIsProcessing(true);
     try {
-      // For demo purposes, we'll use a dummy customer_id or handle auth
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (authError || !user) {
         alert('Please sign in to book an expedition.');
         navigate('/login');
         return;
@@ -43,13 +42,16 @@ const CheckoutPage: React.FC = () => {
         status: 'pending'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Booking error:', error);
+        throw error;
+      }
       
       alert('Booking successful! We will contact you soon.');
       navigate('/tours');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Booking failed:', error);
-      alert('Booking failed. Please try again.');
+      alert(`Booking failed: ${error.message || 'Please try again.'}`);
     } finally {
       setIsProcessing(false);
     }

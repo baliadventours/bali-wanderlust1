@@ -11,7 +11,10 @@ export const createBooking = async (bookingData: {
     .select()
     .single();
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error creating booking:', error);
+    throw error;
+  }
   return data;
 };
 
@@ -21,6 +24,9 @@ export const getMyBookings = async (customerId: string) => {
     .select('*, tours(*)')
     .eq('customer_id', customerId);
   
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching my bookings:', error);
+    throw error;
+  }
   return data;
 };

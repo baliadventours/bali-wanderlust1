@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
+import RoleGuard from '../components/RoleGuard';
 
 // Public Pages
 import HomePage from '../features/home/pages/HomePage';
@@ -29,11 +30,13 @@ const AppRouter: React.FC = () => {
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboard />} />
-        <Route path="tours/create" element={<TourEditor />} />
-        <Route path="tours/edit/:id" element={<TourEditor />} />
-        <Route path="bookings" element={<div className="p-10 font-black text-3xl">Bookings Management</div>} />
+      <Route element={<RoleGuard requiredRole="admin" />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="tours/create" element={<TourEditor />} />
+          <Route path="tours/edit/:id" element={<TourEditor />} />
+          <Route path="bookings" element={<div className="p-10 font-black text-3xl">Bookings Management</div>} />
+        </Route>
       </Route>
 
       {/* Fallback */}

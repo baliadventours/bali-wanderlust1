@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, Users, Star, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { getTourBySlug } from '../api';
 import Container from '../../../components/Container';
 
@@ -28,6 +29,13 @@ const TourDetailPage: React.FC = () => {
 
   return (
     <div className="bg-white pb-32">
+      <Helmet>
+        <title>{tour.title.en} | TourSphere</title>
+        <meta name="description" content={tour.description?.en?.substring(0, 160)} />
+        <meta property="og:title" content={`${tour.title.en} | TourSphere`} />
+        <meta property="og:description" content={tour.description?.en?.substring(0, 160)} />
+        <meta property="og:image" content={primaryImage} />
+      </Helmet>
       {/* Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-2 h-[70vh] gap-2 p-2">
         <div className="h-full rounded-3xl overflow-hidden">

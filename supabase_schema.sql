@@ -28,6 +28,9 @@ CREATE TABLE public.tours (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Slug Index Optimization
+CREATE UNIQUE INDEX tours_slug_idx ON tours(slug);
+
 -- 3. Tour Images Table
 CREATE TABLE public.tour_images (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -58,14 +61,14 @@ CREATE POLICY "Users can update own profile." ON public.profiles FOR UPDATE USIN
 -- Tours
 ALTER TABLE public.tours ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public can read active tours" ON public.tours FOR SELECT USING (is_active = true);
-CREATE POLICY "Admin can manage tours" ON public.tours FOR ALL USING (
+CREATE POLICY "Admin full access on tours" ON public.tours FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
 -- Tour Images
 ALTER TABLE public.tour_images ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public can read tour images" ON public.tour_images FOR SELECT USING (true);
-CREATE POLICY "Admin can manage tour images" ON public.tour_images FOR ALL USING (
+CREATE POLICY "Admin full access on tour_images" ON public.tour_images FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
@@ -73,6 +76,6 @@ CREATE POLICY "Admin can manage tour images" ON public.tour_images FOR ALL USING
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read own bookings" ON public.bookings FOR SELECT USING (auth.uid() = customer_id);
 CREATE POLICY "Users can insert own bookings" ON public.bookings FOR INSERT WITH CHECK (auth.uid() = customer_id);
-CREATE POLICY "Admin can manage bookings" ON public.bookings FOR ALL USING (
+CREATE POLICY "Admin full access on bookings" ON public.bookings FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );

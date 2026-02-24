@@ -1,11 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Globe, Shield, Zap } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import Container from '../../../components/Container';
 
 const HomePage: React.FC = () => {
   return (
     <div className="space-y-32 pb-32">
+      <Helmet>
+        <title>TourSphere | World-Class Expeditions</title>
+        <meta name="description" content="Join our expert-led expeditions to the world's most remote and breathtaking locations. Hand-crafted journeys for the modern explorer." />
+        <meta property="og:title" content="TourSphere | World-Class Expeditions" />
+        <meta property="og:description" content="Join our expert-led expeditions to the world's most remote and breathtaking locations." />
+        <meta property="og:image" content="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=1200" />
+      </Helmet>
       {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center overflow-hidden bg-slate-900">
         <div className="absolute inset-0 z-0">

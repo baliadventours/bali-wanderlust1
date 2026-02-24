@@ -6,7 +6,7 @@ import { getTours } from '../api';
 import Container from '../../../components/Container';
 
 const TourListingPage: React.FC = () => {
-  const { data: tours, isLoading } = useQuery({
+  const { data: tours, isLoading, error } = useQuery({
     queryKey: ['tours'],
     queryFn: getTours
   });
@@ -15,6 +15,26 @@ const TourListingPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <h2 className="text-2xl font-black text-red-600">Failed to load expeditions</h2>
+        <p className="text-slate-500 font-medium">Please try again later.</p>
+        <button onClick={() => window.location.reload()} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold">Retry</button>
+      </div>
+    );
+  }
+
+  if (!tours || tours.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <h2 className="text-2xl font-black text-slate-900">No expeditions found</h2>
+        <p className="text-slate-500 font-medium">Check back later for new adventures.</p>
+        <Link to="/" className="text-emerald-600 font-bold hover:underline">Return Home</Link>
       </div>
     );
   }
