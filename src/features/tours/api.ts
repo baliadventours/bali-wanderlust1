@@ -7,7 +7,7 @@ export const getTours = async (page = 1, limit = 10) => {
 
   const { data, error, count } = await supabase
     .from('tours')
-    .select('*, tour_images(*), vendors(*)', { count: 'exact' })
+    .select('*, tour_images(*)', { count: 'exact' })
     .eq('is_active', true)
     .range(from, to)
     .order('created_at', { ascending: false });
@@ -25,7 +25,7 @@ export const getTours = async (page = 1, limit = 10) => {
 export const getTourBySlug = async (slug: string) => {
   const { data, error } = await supabase
     .from('tours')
-    .select('*, tour_images(*), vendors(*)')
+    .select('*, tour_images(*)')
     .eq('slug', slug)
     .single();
   

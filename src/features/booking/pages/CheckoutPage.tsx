@@ -1,82 +1,60 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, CreditCard, Shield, CheckCircle2 } from 'lucide-react';
+import { Loader2, CreditCard, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 import Container from '../../../components/Container';
-import { Tour, TourImage } from '../../../lib/types';
-import { calculateBookingPrice } from '../../../services/pricingService';
+import { Booking, Tour, TourImage } from '../../../lib/types';
 
 const CheckoutPage: React.FC = () => {
-  const { tourId } = useParams<{ tourId: string }>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const date = searchParams.get('date') || '';
-  const participantsStr = searchParams.get('p') || '[]';
-  const participants = JSON.parse(participantsStr);
+  const bookingId = searchParams.get('bid');
 
-  const { data: tour, isLoading } = useQuery({
-    queryKey: ['tour-checkout', tourId],
+  const { data: booking, isLoading: isBookingLoading } = useQuery({
+    queryKey: ['booking', bookingId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('tours')
-        .select('*, tour_images(*)')
-        .eq('id', tourId)
+        .from('bookings')
+        .select('*, tours(*, tour_images(*))')
+        .eq('id', bookingId)
         .single();
       if (error) throw error;
-      return data as (Tour & { tour_images: TourImage[] });
-    }
+      return data as (Booking & { tours: Tour & { tour_images: TourImage[] } });
+    },
+    enabled: !!bookingId
   });
 
-  const { data: priceData } = useQuery({
-    queryKey: ['price-checkout', tourId, date, participants],
-    queryFn: () => calculateBookingPrice(tourId!, date, participants),
-    enabled: !!tourId && !!date
-  });
-
-  const handleBooking = async () => {
+  const handlePayment = async () => {
     setIsProcessing(true);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        alert('Please sign in to book an expedition.');
-        navigate('/login');
-        return;
-      }
-
-      const { error } = await supabase.from('bookings').insert({
-        customer_id: user.id,
-        vendor_id: tour?.vendor_id,
-        tour_id: tourId,
-        booking_date: date,
-        total_amount_usd: priceData?.total || tour?.base_price_usd,
-        pricing_breakdown: priceData?.breakdown || {},
-        status: 'pending'
+      // Initiate payment via Edge Function
+      const { data, error } = await supabase.functions.invoke('initiate-payment', {
+        body: { bookingId: booking?.id }
       });
 
-      if (error) {
-        console.error('Booking error:', error);
-        throw error;
+      if (error) throw error;
+
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        alert('Payment initiated. Please follow the instructions.');
       }
-      
-      alert('Booking successful! We will contact you soon.');
-      navigate('/tours');
     } catch (error: any) {
-      console.error('Booking failed:', error);
-      alert(`Booking failed: ${error.message || 'Please try again.'}`);
+      console.error('Payment initiation failed:', error);
+      alert(error.message || 'Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
-  if (!tour) return <div className="p-20 text-center">Tour not found</div>;
+  if (isBookingLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" /></div>;
+  if (!booking) return <div className="p-20 text-center">Booking not found</div>;
 
+  const tour = booking.tours!;
   const title = i18n.language === 'id' ? tour.title_id : tour.title_en;
 
   return (
@@ -88,22 +66,13 @@ const CheckoutPage: React.FC = () => {
               <h2 className="text-3xl font-black text-slate-900">{t('checkout.title')}</h2>
               
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-slate-400">Card Number</label>
-                  <div className="relative">
-                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                    <input type="text" placeholder="0000 0000 0000 0000" className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 font-bold" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">Expiry</label>
-                    <input type="text" placeholder="MM/YY" className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 font-bold" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-400">CVC</label>
-                    <input type="text" placeholder="123" className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 font-bold" />
-                  </div>
+                <p className="text-slate-500 font-medium">
+                  Your booking is reserved. Please complete the payment to confirm your expedition.
+                </p>
+                <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100">
+                  <p className="text-amber-800 text-sm font-bold">
+                    Reserved until: {new Date(booking.expires_at).toLocaleTimeString()}
+                  </p>
                 </div>
               </div>
             </div>
@@ -125,12 +94,12 @@ const CheckoutPage: React.FC = () => {
                 <div>
                   <h4 className="font-black text-slate-900 text-lg">{title}</h4>
                   <p className="text-slate-400 font-bold">{Math.round(tour.duration_minutes / 1440)} Days Expedition</p>
-                  <p className="text-emerald-600 font-black text-xs uppercase tracking-widest mt-2">{date}</p>
+                  <p className="text-emerald-600 font-black text-xs uppercase tracking-widest mt-2">{booking.booking_date}</p>
                 </div>
               </div>
 
               <div className="space-y-4 pt-8 border-t border-slate-50">
-                {priceData?.breakdown.map((item: any) => (
+                {booking.pricing_breakdown.map((item: any) => (
                   <div key={item.type} className="flex justify-between text-slate-500 font-bold">
                     <span>{item.count}x {item.type}</span>
                     <span>${item.subtotal}</span>
@@ -138,16 +107,16 @@ const CheckoutPage: React.FC = () => {
                 ))}
                 <div className="flex justify-between text-slate-900 text-2xl font-black pt-4 border-t border-slate-100">
                   <span>{t('checkout.total')}</span>
-                  <span>${priceData?.total || tour.base_price_usd}</span>
+                  <span>${booking.total_amount_usd}</span>
                 </div>
               </div>
 
               <button 
-                onClick={handleBooking}
+                onClick={handlePayment}
                 disabled={isProcessing}
                 className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20 disabled:opacity-50"
               >
-                {isProcessing ? <Loader2 className="animate-spin" /> : <>{t('checkout.complete_booking')} <CheckCircle2 className="w-6 h-6" /></>}
+                {isProcessing ? <Loader2 className="animate-spin" /> : <>{t('checkout.complete_payment')} <CreditCard className="w-6 h-6" /></>}
               </button>
             </div>
           </div>

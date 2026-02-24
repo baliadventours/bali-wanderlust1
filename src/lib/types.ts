@@ -1,6 +1,6 @@
 
-export type UserRole = 'customer' | 'vendor' | 'admin';
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type UserRole = 'customer' | 'admin';
+export type BookingStatus = 'awaiting_payment' | 'confirmed' | 'cancelled' | 'expired' | 'completed';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired';
 export type PaymentProvider = 'midtrans' | 'paypal' | 'bank_transfer';
 export type PriceType = 'adult' | 'child' | 'group';
@@ -14,19 +14,8 @@ export type Profile = {
   created_at: string;
 };
 
-export type Vendor = {
-  id: string;
-  owner_id: string;
-  name: string;
-  slug: string;
-  commission_rate: number;
-  verified: boolean;
-  created_at: string;
-};
-
 export type Tour = {
   id: string;
-  vendor_id: string;
   title_en: string;
   title_id: string;
   slug: string;
@@ -39,7 +28,6 @@ export type Tour = {
   is_active: boolean;
   created_at: string;
   tour_images: TourImage[];
-  vendor?: Vendor;
 };
 
 export type TourImage = {
@@ -71,12 +59,12 @@ export type TourPricing = {
 export type Booking = {
   id: string;
   customer_id: string;
-  vendor_id: string;
   tour_id: string;
   booking_date: string;
   status: BookingStatus;
   total_amount_usd: number;
   pricing_breakdown: any;
+  expires_at: string;
   created_at: string;
   tours?: Tour;
 };

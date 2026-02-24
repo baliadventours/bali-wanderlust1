@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Clock, Users, Star, Loader2, ShieldCheck, CheckCircle2, Calendar } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../../../lib/supabase';
 import { getTourBySlug } from '../api';
-import { calculateBookingPrice, checkAvailability } from '../../../services/pricingService';
+import { calculateBookingPrice } from '../../../services/pricingService';
 import Container from '../../../components/Container';
 
 const TourDetailPage: React.FC = () => {
@@ -44,19 +45,46 @@ const TourDetailPage: React.FC = () => {
   const title = i18n.language === 'id' ? tour.title_id : tour.title_en;
   const description = i18n.language === 'id' ? tour.description_id : tour.description_en;
 
+  const [isBooking, setIsBooking] = useState(false);
+
   const handleBookNow = async () => {
     if (!selectedDate) {
       alert('Please select a date');
       return;
     }
 
-    const isAvailable = await checkAvailability(tour.id, selectedDate, participants.reduce((s, p) => s + p.count, 0));
-    if (!isAvailable) {
-      alert('Sorry, this date is fully booked');
+    const totalParticipants = participants.reduce((s, p) => s + p.count, 0);
+    if (totalParticipants === 0) {
+      alert('Please select at least one participant');
       return;
     }
 
-    navigate(`/checkout/${tour.id}?date=${selectedDate}&p=${JSON.stringify(participants)}`);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate(`/${i18n.language}/login`);
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const participantArray = participants.filter(p => p.count > 0);
+
+      const { data: bookingId, error } = await supabase.rpc('reserve_slots', {
+        p_tour_id: tour.id,
+        p_date: selectedDate,
+        p_participants: participantArray,
+        p_customer_id: user.id
+      });
+
+      if (error) throw error;
+
+      navigate(`/${i18n.language}/checkout/${tour.id}?date=${selectedDate}&p=${JSON.stringify(participantArray)}&bid=${bookingId}`);
+    } catch (error: any) {
+      console.error('Booking failed:', error);
+      alert(error.message || 'Booking failed. Please try again.');
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   return (
@@ -231,9 +259,10 @@ const TourDetailPage: React.FC = () => {
 
               <button 
                 onClick={handleBookNow}
-                className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20"
+                disabled={isBooking}
+                className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20 disabled:opacity-50"
               >
-                {t('tour.book_expedition')} <CheckCircle2 className="w-6 h-6" />
+                {isBooking ? <Loader2 className="animate-spin" /> : <>{t('tour.book_expedition')} <CheckCircle2 className="w-6 h-6" /></>}
               </button>
             </div>
 

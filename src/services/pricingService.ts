@@ -6,43 +6,18 @@ export const calculateBookingPrice = async (
   date: string,
   participants: { type: PriceType; count: number }[]
 ) => {
-  // 1. Fetch pricing rules for the tour and date
-  const { data: pricingRules, error } = await supabase
-    .from('tour_pricing')
-    .select('*')
-    .eq('tour_id', tourId)
-    .or(`date.eq.${date},date.is.null`)
-    .order('date', { ascending: false }); // Date-specific rules first
-
-  if (error) throw error;
-
-  let total = 0;
-  const breakdown: any[] = [];
-  const totalCount = participants.reduce((sum, p) => sum + p.count, 0);
-
-  participants.forEach(p => {
-    if (p.count <= 0) return;
-
-    // Find best matching rule
-    const rule = pricingRules?.find(r => 
-      r.price_type === p.type && 
-      (r.min_group_size <= totalCount) && 
-      (!r.max_group_size || r.max_group_size >= totalCount)
-    );
-
-    const price = rule ? rule.price_per_person : 0; // Fallback or base price
-    const subtotal = price * p.count;
-    
-    total += subtotal;
-    breakdown.push({
-      type: p.type,
-      count: p.count,
-      price_per_person: price,
-      subtotal
-    });
+  const { data, error } = await supabase.rpc('calculate_price', {
+    p_tour_id: tourId,
+    p_date: date,
+    p_participants: participants
   });
 
-  return { total, breakdown };
+  if (error) {
+    console.error('Error calculating price:', error);
+    throw error;
+  }
+
+  return data as { total: number; breakdown: any[] };
 };
 
 export const checkAvailability = async (tourId: string, date: string, requestedSlots: number) => {

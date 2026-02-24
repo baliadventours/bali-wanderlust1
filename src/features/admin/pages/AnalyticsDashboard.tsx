@@ -13,19 +13,29 @@ const AnalyticsDashboard: React.FC = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: bookings } = await supabase.from('bookings').select('total_amount_usd, created_at, status');
-      const { data: customers } = await supabase.from('profiles').select('id').eq('role', 'customer');
-      const { data: vendors } = await supabase.from('vendors').select('id');
+      // Aggregate queries
+      const { data: revenueData } = await supabase
+        .from('bookings')
+        .select('total_amount_usd, created_at')
+        .eq('status', 'confirmed');
 
-      const totalRevenue = bookings?.reduce((sum, b) => sum + (b.status === 'confirmed' ? b.total_amount_usd : 0), 0) || 0;
-      const totalBookings = bookings?.length || 0;
-      const totalCustomers = customers?.length || 0;
-      const totalVendors = vendors?.length || 0;
+      const { data: bookingCounts } = await supabase
+        .from('bookings')
+        .select('status');
+
+      const { data: customerCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'customer');
+
+      const totalRevenue = revenueData?.reduce((sum, b) => sum + b.total_amount_usd, 0) || 0;
+      const totalBookings = bookingCounts?.length || 0;
+      const totalCustomers = customerCount || 0;
 
       // Group revenue by month for chart
-      const revenueByMonth = bookings?.reduce((acc: any, b) => {
+      const revenueByMonth = revenueData?.reduce((acc: any, b) => {
         const month = new Date(b.created_at).toLocaleString('default', { month: 'short' });
-        acc[month] = (acc[month] || 0) + (b.status === 'confirmed' ? b.total_amount_usd : 0);
+        acc[month] = (acc[month] || 0) + b.total_amount_usd;
         return acc;
       }, {});
 
@@ -38,7 +48,6 @@ const AnalyticsDashboard: React.FC = () => {
         totalRevenue,
         totalBookings,
         totalCustomers,
-        totalVendors,
         chartData
       };
     }
@@ -47,10 +56,10 @@ const AnalyticsDashboard: React.FC = () => {
   if (isLoading) return <div className="p-20 text-center">Loading Analytics...</div>;
 
   const cards = [
-    { title: 'Total Revenue', value: `$${stats?.totalRevenue.toLocaleString()}`, icon: DollarSign, trend: '+12.5%', isUp: true },
-    { title: 'Total Bookings', value: stats?.totalBookings, icon: Calendar, trend: '+5.2%', isUp: true },
-    { title: 'Active Customers', value: stats?.totalCustomers, icon: Users, trend: '+18.1%', isUp: true },
-    { title: 'Total Vendors', value: stats?.totalVendors, icon: TrendingUp, trend: '-2.4%', isUp: false },
+    { title: 'Total Revenue', value: `$${stats?.totalRevenue.toLocaleString() || 0}`, icon: DollarSign, trend: '+12.5%', isUp: true },
+    { title: 'Total Bookings', value: stats?.totalBookings.toString() || '0', icon: Calendar, trend: '+5.2%', isUp: true },
+    { title: 'Active Customers', value: stats?.totalCustomers.toString() || '0', icon: Users, trend: '+18.1%', isUp: true },
+    { title: 'Conversion Rate', value: '3.2%', icon: TrendingUp, trend: '+0.4%', isUp: true },
   ];
 
   return (
