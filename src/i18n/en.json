@@ -1,0 +1,37 @@
+{
+  "common": {
+    "search": "Search",
+    "book_now": "Book Now",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "home": "Home",
+    "tours": "Expeditions",
+    "about": "About Us",
+    "contact": "Contact Us",
+    "login": "Login",
+    "admin": "Admin Panel",
+    "vendor": "Vendor Panel"
+  },
+  "home": {
+    "hero_title": "EXPLORE THE UNEXPLORED.",
+    "hero_subtitle": "Join our expert-led expeditions to the world's most remote and breathtaking locations.",
+    "view_expeditions": "View Expeditions"
+  },
+  "tour": {
+    "duration": "Duration",
+    "group_size": "Group Size",
+    "difficulty": "Difficulty",
+    "price_per_person": "Price per person",
+    "book_expedition": "Book Expedition",
+    "about_expedition": "About this expedition",
+    "whats_included": "What's included"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "summary": "Summary",
+    "total": "Total",
+    "complete_booking": "Complete Booking",
+    "processing": "Processing..."
+  }
+}

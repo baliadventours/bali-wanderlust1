@@ -1,24 +1,45 @@
 
+export type UserRole = 'customer' | 'vendor' | 'admin';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired';
+export type PaymentProvider = 'midtrans' | 'paypal' | 'bank_transfer';
+export type PriceType = 'adult' | 'child' | 'group';
+
 export type Profile = {
   id: string;
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
-  role: 'customer' | 'admin';
+  role: UserRole;
+  created_at: string;
+};
+
+export type Vendor = {
+  id: string;
+  owner_id: string;
+  name: string;
+  slug: string;
+  commission_rate: number;
+  verified: boolean;
   created_at: string;
 };
 
 export type Tour = {
   id: string;
-  title: { [key: string]: string };
+  vendor_id: string;
+  title_en: string;
+  title_id: string;
   slug: string;
-  description: { [key: string]: string } | null;
+  description_en: string | null;
+  description_id: string | null;
   base_price_usd: number;
   duration_minutes: number;
   max_participants: number;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   is_active: boolean;
   created_at: string;
+  tour_images: TourImage[];
+  vendor?: Vendor;
 };
 
 export type TourImage = {
@@ -29,11 +50,44 @@ export type TourImage = {
   created_at: string;
 };
 
+export type TourAvailability = {
+  id: string;
+  tour_id: string;
+  date: string;
+  total_slots: number;
+  booked_slots: number;
+};
+
+export type TourPricing = {
+  id: string;
+  tour_id: string;
+  date: string | null;
+  min_group_size: number;
+  max_group_size: number | null;
+  price_per_person: number;
+  price_type: PriceType;
+};
+
 export type Booking = {
   id: string;
   customer_id: string;
+  vendor_id: string;
   tour_id: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  booking_date: string;
+  status: BookingStatus;
   total_amount_usd: number;
+  pricing_breakdown: any;
+  created_at: string;
+  tours?: Tour;
+};
+
+export type Payment = {
+  id: string;
+  booking_id: string;
+  provider: PaymentProvider;
+  transaction_id: string | null;
+  amount: number;
+  status: PaymentStatus;
+  payment_details: any;
   created_at: string;
 };

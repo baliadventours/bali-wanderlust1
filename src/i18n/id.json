@@ -1,0 +1,37 @@
+{
+  "common": {
+    "search": "Cari",
+    "book_now": "Pesan Sekarang",
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba lagi",
+    "home": "Beranda",
+    "tours": "Ekspedisi",
+    "about": "Tentang Kami",
+    "contact": "Kontak",
+    "login": "Masuk",
+    "admin": "Panel Admin",
+    "vendor": "Panel Vendor"
+  },
+  "home": {
+    "hero_title": "JELAJAHI YANG BELUM TERJAMAH.",
+    "hero_subtitle": "Bergabunglah dengan ekspedisi yang dipandu ahli kami ke lokasi paling terpencil dan menakjubkan di dunia.",
+    "view_expeditions": "Lihat Ekspedisi"
+  },
+  "tour": {
+    "duration": "Durasi",
+    "group_size": "Ukuran Grup",
+    "difficulty": "Kesulitan",
+    "price_per_person": "Harga per orang",
+    "book_expedition": "Pesan Ekspedisi",
+    "about_expedition": "Tentang ekspedisi ini",
+    "whats_included": "Apa yang termasuk"
+  },
+  "checkout": {
+    "title": "Pembayaran",
+    "summary": "Ringkasan",
+    "total": "Total",
+    "complete_booking": "Selesaikan Pemesanan",
+    "processing": "Memproses..."
+  }
+}

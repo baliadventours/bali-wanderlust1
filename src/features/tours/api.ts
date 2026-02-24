@@ -1,23 +1,31 @@
 import { supabase } from '../../lib/supabase';
 import { Tour, TourImage } from '../../lib/types';
 
-export const getTours = async () => {
-  const { data, error } = await supabase
+export const getTours = async (page = 1, limit = 10) => {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
     .from('tours')
-    .select('*, tour_images(*)')
-    .eq('is_active', true);
+    .select('*, tour_images(*), vendors(*)', { count: 'exact' })
+    .eq('is_active', true)
+    .range(from, to)
+    .order('created_at', { ascending: false });
   
   if (error) {
     console.error('Error fetching tours:', error);
     throw error;
   }
-  return data as (Tour & { tour_images: TourImage[] })[];
+  return {
+    data: data as (Tour & { tour_images: TourImage[] })[],
+    count
+  };
 };
 
 export const getTourBySlug = async (slug: string) => {
   const { data, error } = await supabase
     .from('tours')
-    .select('*, tour_images(*)')
+    .select('*, tour_images(*), vendors(*)')
     .eq('slug', slug)
     .single();
   

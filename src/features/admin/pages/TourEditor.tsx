@@ -13,9 +13,11 @@ const TourEditor: React.FC = () => {
   const isEdit = !!id;
 
   const [formData, setFormData] = useState({
-    title: '',
+    title_en: '',
+    title_id: '',
     slug: '',
-    description: '',
+    description_en: '',
+    description_id: '',
     base_price_usd: 0,
     duration_minutes: 0,
     max_participants: 10,
@@ -40,9 +42,11 @@ const TourEditor: React.FC = () => {
   useEffect(() => {
     if (tour) {
       setFormData({
-        title: tour.title.en,
+        title_en: tour.title_en,
+        title_id: tour.title_id,
         slug: tour.slug,
-        description: tour.description?.en || '',
+        description_en: tour.description_en || '',
+        description_id: tour.description_id || '',
         base_price_usd: tour.base_price_usd,
         duration_minutes: tour.duration_minutes,
         max_participants: tour.max_participants,
@@ -55,9 +59,11 @@ const TourEditor: React.FC = () => {
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const payload = {
-        title: { en: data.title },
+        title_en: data.title_en,
+        title_id: data.title_id,
         slug: data.slug,
-        description: { en: data.description },
+        description_en: data.description_en,
+        description_id: data.description_id,
         base_price_usd: data.base_price_usd,
         duration_minutes: data.duration_minutes,
         max_participants: data.max_participants,
@@ -104,18 +110,29 @@ const TourEditor: React.FC = () => {
         <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Tour Title</label>
-              <input name="title" value={formData.title} onChange={handleChange} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="e.g. The Himalayan Trek" />
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Title (EN)</label>
+              <input name="title_en" value={formData.title_en} onChange={handleChange} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="e.g. The Himalayan Trek" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">URL Slug</label>
-              <input name="slug" value={formData.slug} onChange={handleChange} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="e.g. himalayan-trek" />
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Title (ID)</label>
+              <input name="title_id" value={formData.title_id} onChange={handleChange} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="e.g. Pendakian Himalaya" />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows={5} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="Describe the adventure..." />
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">URL Slug</label>
+            <input name="slug" value={formData.slug} onChange={handleChange} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="e.g. himalayan-trek" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Description (EN)</label>
+              <textarea name="description_en" value={formData.description_en} onChange={handleChange} rows={5} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="Describe the adventure in English..." />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Description (ID)</label>
+              <textarea name="description_id" value={formData.description_id} onChange={handleChange} rows={5} required className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold focus:outline-none focus:border-emerald-500 transition-all" placeholder="Deskripsikan petualangan dalam Bahasa Indonesia..." />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
